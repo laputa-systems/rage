@@ -345,9 +345,9 @@ fn rsa_privkey(input: &str) -> IResult<&str, Identity> {
                             .ok()
                             .map(|privkey| {
                                 let mut ssh_key = vec![];
-                                cookie_factory::gen(
-                                    write_ssh::rsa_pubkey(&privkey.to_public_key()),
+                                write_ssh::rsa_pubkey(
                                     &mut ssh_key,
+                                    &privkey.to_public_key(),
                                 )
                                 .expect("can write into a Vec");
                                 UnencryptedKey::SshRsa(ssh_key, Box::new(privkey)).into()

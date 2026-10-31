@@ -51,7 +51,7 @@ impl HeaderV1 {
         }
 
         let mut mac = HmacWriter::new(mac_key);
-        cookie_factory::gen(write::header_v1_minus_mac(&header), &mut mac)
+        write::header_v1_minus_mac(&mut mac, &header)
             .expect("can serialize Header into HmacWriter");
         header
             .mac
@@ -67,7 +67,7 @@ impl HeaderV1 {
             mac.write_all(&bytes[..bytes.len() - ENCODED_MAC_LENGTH - 2])
                 .expect("can serialize Header into HmacWriter");
         } else {
-            cookie_factory::gen(write::header_v1_minus_mac(self), &mut mac)
+            write::header_v1_minus_mac(&mut mac, self)
                 .expect("can serialize Header into HmacWriter");
         }
         mac.verify(&self.mac)
@@ -219,28 +219,14 @@ impl Header {
     }
 
     pub(crate) fn write<W: Write>(&self, mut output: W) -> io::Result<()> {
-        cookie_factory::gen(write::header(self), &mut output)
-            .map(|_| ())
-            .map_err(|e| {
-                io::Error::new(
-                    io::ErrorKind::Other,
-                    format!("failed to write header: {}", e),
-                )
-            })
+        write::header(&mut output, self)
     }
 
     #[cfg(feature = "async")]
     #[cfg_attr(docsrs, doc(cfg(feature = "async")))]
     pub(crate) async fn write_async<W: AsyncWrite + Unpin>(&self, mut output: W) -> io::Result<()> {
         let mut buf = vec![];
-        cookie_factory::gen(write::header(self), &mut buf)
-            .map(|_| ())
-            .map_err(|e| {
-                io::Error::new(
-                    io::ErrorKind::Other,
-                    format!("failed to write header: {}", e),
-                )
-            })?;
+        write::header(&mut buf, self)?;
 
         output.write_all(&buf).await
     }
@@ -315,50 +301,41 @@ mod read {
 
 mod write {
     use age_core::format::write::age_stanza;
-    use cookie_factory::{
-        combinator::{slice, string},
-        multi::all,
-        sequence::tuple,
-        SerializeFn, WriteContext,
-    };
-    use std::io::Write;
+    use base64::{Engine, prelude::BASE64_STANDARD_NO_PAD};
+    use std::io::{self, Write};
 
     use super::*;
-    use crate::util::write::encoded_data;
 
-    fn recipient_stanza<'a, W: 'a + Write>(r: &'a Stanza) -> impl SerializeFn<W> + 'a {
-        move |w: WriteContext<W>| {
-            let args: Vec<_> = r.args.iter().map(|s| s.as_str()).collect();
-            let writer = age_stanza(&r.tag, &args, &r.body);
-            writer(w)
+    fn recipient_stanza<W: Write>(w: &mut W, r: &Stanza) -> io::Result<()> {
+        let args: Vec<_> = r.args.iter().map(|s| s.as_str()).collect();
+        age_stanza(w, &r.tag, &args, &r.body)
+    }
+
+    pub(super) fn header_v1_minus_mac<W: Write>(w: &mut W, h: &HeaderV1) -> io::Result<()> {
+        w.write_all(AGE_MAGIC)?;
+        w.write_all(V1_MAGIC)?;
+        w.write_all(b"\n")?;
+        for r in &h.recipients {
+            recipient_stanza(w, r)?;
         }
+        w.write_all(MAC_TAG)
     }
 
-    pub(super) fn header_v1_minus_mac<'a, W: 'a + Write>(
-        h: &'a HeaderV1,
-    ) -> impl SerializeFn<W> + 'a {
-        tuple((
-            slice(AGE_MAGIC),
-            slice(V1_MAGIC),
-            string("\n"),
-            all(h.recipients.iter().map(move |r| recipient_stanza(r))),
-            slice(MAC_TAG),
-        ))
+    fn header_v1<W: Write>(w: &mut W, h: &HeaderV1) -> io::Result<()> {
+        header_v1_minus_mac(w, h)?;
+        w.write_all(b" ")?;
+        w.write_all(BASE64_STANDARD_NO_PAD.encode(h.mac).as_bytes())?;
+        w.write_all(b"\n")
     }
 
-    fn header_v1<'a, W: 'a + Write>(h: &'a HeaderV1) -> impl SerializeFn<W> + 'a {
-        tuple((
-            header_v1_minus_mac(h),
-            string(" "),
-            encoded_data(&h.mac),
-            string("\n"),
-        ))
-    }
-
-    pub(super) fn header<'a, W: 'a + Write>(h: &'a Header) -> impl SerializeFn<W> + 'a {
-        move |w: WriteContext<W>| match h {
-            Header::V1(v1) => header_v1(v1)(w),
-            Header::Unknown(version) => tuple((slice(AGE_MAGIC), slice(version), string("\n")))(w),
+    pub(super) fn header<W: Write>(w: &mut W, h: &Header) -> io::Result<()> {
+        match h {
+            Header::V1(v1) => header_v1(w, v1),
+            Header::Unknown(version) => {
+                w.write_all(AGE_MAGIC)?;
+                w.write_all(version.as_bytes())?;
+                w.write_all(b"\n")
+            }
         }
     }
 }

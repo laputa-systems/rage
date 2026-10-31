@@ -119,14 +119,8 @@ impl<R: Read, W: Write> Connection<R, W> {
         metadata: &[S],
         data: &[u8],
     ) -> io::Result<()> {
-        use cookie_factory::GenError;
-
-        cookie_factory::gen_simple(write::age_stanza(command, metadata, data), &mut self.output)
-            .map_err(|e| match e {
-                GenError::IoError(e) => e,
-                e => io::Error::new(io::ErrorKind::Other, format!("{}", e)),
-            })
-            .and_then(|w| w.flush())
+        write::age_stanza(&mut self.output, command, metadata, data)?;
+        self.output.flush()
     }
 
     fn send_stanza<S: AsRef<str>>(

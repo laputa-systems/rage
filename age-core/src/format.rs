@@ -355,55 +355,45 @@ pub mod read {
 
 /// Encoding operations for age types.
 pub mod write {
-    use base64::{prelude::BASE64_STANDARD_NO_PAD, Engine};
-    use cookie_factory::{
-        combinator::string,
-        multi::separated_list,
-        sequence::{pair, tuple},
-        SerializeFn, WriteContext,
-    };
-    use std::io::Write;
-    use std::iter;
+    use base64::{Engine, prelude::BASE64_STANDARD_NO_PAD};
+    use std::io::{self, Write};
 
     use super::STANZA_TAG;
 
-    fn wrapped_encoded_data<'a, W: 'a + Write>(data: &[u8]) -> impl SerializeFn<W> + 'a {
+    fn wrapped_encoded_data<W: Write>(w: &mut W, data: &[u8]) -> io::Result<()> {
         let encoded = BASE64_STANDARD_NO_PAD.encode(data);
 
-        move |mut w: WriteContext<W>| {
-            let mut s = encoded.as_str();
+        let mut s = encoded.as_str();
 
-            // Write full body lines.
-            while s.len() >= 64 {
-                let (l, r) = s.split_at(64);
-                w = pair(string(l), string("\n"))(w)?;
-                s = r;
-            }
-
-            // Last body line MUST be short (empty if necessary).
-            pair(string(s), string("\n"))(w)
+        // Write full body lines.
+        while s.len() >= 64 {
+            let (l, r) = s.split_at(64);
+            w.write_all(l.as_bytes())?;
+            w.write_all(b"\n")?;
+            s = r;
         }
+
+        // Last body line MUST be short (empty if necessary).
+        w.write_all(s.as_bytes())?;
+        w.write_all(b"\n")
     }
 
     /// Writes an age stanza.
-    pub fn age_stanza<'a, W: 'a + Write, S: AsRef<str>>(
-        tag: &'a str,
-        args: &'a [S],
-        body: &'a [u8],
-    ) -> impl SerializeFn<W> + 'a {
-        pair(
-            tuple((
-                string(STANZA_TAG),
-                separated_list(
-                    string(" "),
-                    iter::once(tag)
-                        .chain(args.iter().map(|s| s.as_ref()))
-                        .map(string),
-                ),
-                string("\n"),
-            )),
-            wrapped_encoded_data(body),
-        )
+    pub fn age_stanza<W: Write, S: AsRef<str>>(
+        w: &mut W,
+        tag: &str,
+        args: &[S],
+        body: &[u8],
+    ) -> io::Result<()> {
+        w.write_all(STANZA_TAG.as_bytes())?;
+        w.write_all(tag.as_bytes())?;
+        for arg in args {
+            w.write_all(b" ")?;
+            w.write_all(arg.as_ref().as_bytes())?;
+        }
+        w.write_all(b"\n")?;
+
+        wrapped_encoded_data(w, body)
     }
 }
 
@@ -433,8 +423,7 @@ C3ZAeY64NXS4QFrksLm3EGz+uPRyI0eQsWw7LWbbYig
         assert_eq!(stanza.body(), test_body);
 
         let mut buf = vec![];
-        cookie_factory::gen_simple(write::age_stanza(test_tag, test_args, &test_body), &mut buf)
-            .unwrap();
+        write::age_stanza(&mut buf, test_tag, test_args, &test_body).unwrap();
         assert_eq!(buf, test_stanza.as_bytes());
     }
 
@@ -455,8 +444,7 @@ C3ZAeY64NXS4QFrksLm3EGz+uPRyI0eQsWw7LWbbYig
         assert_eq!(stanza.body(), test_body);
 
         let mut buf = vec![];
-        cookie_factory::gen_simple(write::age_stanza(test_tag, test_args, test_body), &mut buf)
-            .unwrap();
+        write::age_stanza(&mut buf, test_tag, test_args, test_body).unwrap();
         assert_eq!(buf, test_stanza.as_bytes());
     }
 
@@ -480,8 +468,7 @@ xD7o4VEOu1t7KZQ1gDgq2FPzBEeSRqbnqvQEXdLRYy143BxR6oFxsUUJCRB0ErXA
         assert_eq!(stanza.body(), test_body);
 
         let mut buf = vec![];
-        cookie_factory::gen_simple(write::age_stanza(test_tag, test_args, &test_body), &mut buf)
-            .unwrap();
+        write::age_stanza(&mut buf, test_tag, test_args, &test_body).unwrap();
         assert_eq!(buf, test_stanza.as_bytes());
     }
 

@@ -1,8 +1,6 @@
 use std::io;
 
-#[cfg(all(any(feature = "armor", feature = "cli-common"), windows))]
-pub(crate) const LINE_ENDING: &str = "\r\n";
-#[cfg(all(any(feature = "armor", feature = "cli-common"), not(windows)))]
+#[cfg(any(feature = "armor", feature = "cli-common"))]
 pub(crate) const LINE_ENDING: &str = "\n";
 
 pub(crate) struct LimitedReader<R> {
@@ -231,13 +229,3 @@ pub(crate) mod read {
     }
 }
 
-pub(crate) mod write {
-    use base64::{prelude::BASE64_STANDARD_NO_PAD, Engine};
-    use cookie_factory::{combinator::string, SerializeFn};
-    use std::io::Write;
-
-    pub(crate) fn encoded_data<W: Write>(data: &[u8]) -> impl SerializeFn<W> {
-        let encoded = BASE64_STANDARD_NO_PAD.encode(data);
-        string(encoded)
-    }
-}

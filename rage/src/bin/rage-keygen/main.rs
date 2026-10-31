@@ -2,27 +2,14 @@
 
 use age::{cli_common::file_io, secrecy::ExposeSecret};
 use clap::Parser;
-use i18n_embed::DesktopLanguageRequester;
 
 use std::io::{self, Write};
 
 mod cli;
 mod error;
 
-mod i18n {
-    include!("../rage/i18n.rs");
-}
-
-#[macro_export]
-macro_rules! fl {
-    ($message_id:literal) => {{
-        i18n_embed_fl::fl!($crate::i18n::LANGUAGE_LOADER, $message_id)
-    }};
-
-    ($message_id:literal, $($args:expr),* $(,)?) => {{
-        i18n_embed_fl::fl!($crate::i18n::LANGUAGE_LOADER, $message_id, $($args), *)
-    }};
-}
+#[path = "../rage/messages.rs"]
+mod messages;
 
 fn main() -> Result<(), error::Error> {
     env_logger::builder()
@@ -30,10 +17,6 @@ fn main() -> Result<(), error::Error> {
         .filter_level(log::LevelFilter::Off)
         .parse_default_env()
         .init();
-
-    let requested_languages = DesktopLanguageRequester::requested_languages();
-    i18n::load_languages(&requested_languages);
-    age::localizer().select(&requested_languages).unwrap();
 
     let opts = cli::AgeOptions::parse();
 

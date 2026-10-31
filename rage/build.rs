@@ -10,12 +10,10 @@ use clap_mangen::{
     roff::{Inline, Roff},
     Man,
 };
-use flate2::{write::GzEncoder, Compression};
-use i18n_embed::unic_langid::LanguageIdentifier;
+use flate2::{Compression, write::GzEncoder};
 
-mod i18n {
-    include!("src/bin/rage/i18n.rs");
-}
+#[path = "src/bin/rage/messages.rs"]
+mod messages;
 mod rage {
     include!("src/bin/rage/cli.rs");
 }
@@ -25,17 +23,6 @@ mod rage_keygen {
 #[cfg(feature = "mount")]
 mod rage_mount {
     include!("src/bin/rage-mount/cli.rs");
-}
-
-#[macro_export]
-macro_rules! fl {
-    ($message_id:literal) => {{
-        i18n_embed_fl::fl!($crate::i18n::LANGUAGE_LOADER, $message_id)
-    }};
-
-    ($message_id:literal, $($args:expr),* $(,)?) => {{
-        i18n_embed_fl::fl!($crate::i18n::LANGUAGE_LOADER, $message_id, $($args), *)
-    }};
 }
 
 /// Formats localized text.
@@ -431,38 +418,11 @@ fn main() -> io::Result<()> {
             .to_path_buf(),
     };
 
-    // Generate the completions in English, because these aren't easily localizable.
-    i18n::load_languages(&[]);
     Cli::build().generate_completions(&out_dir.join("completions"))?;
 
-    // Generate manpages for all supported languages.
-    let manpage_dir = out_dir.join("manpages");
-    for lang_dir in fs::read_dir("./i18n")? {
-        let lang_dir = lang_dir?.file_name();
-        let lang: LanguageIdentifier = lang_dir
-            .to_str()
-            .expect("should be valid Unicode")
-            .parse()
-            .expect("should be valid language identifier");
-
-        // Render the manpages into the correct folder structure, so that local checks can
-        // be performed with `man -M target/debug/manpages BINARY_NAME`.
-        let mut out_dir = if lang.language.as_str() == "en" {
-            manpage_dir.clone()
-        } else {
-            let mut lang_str = lang.language.as_str().to_owned();
-            if let Some(region) = lang.region {
-                // Locales for manpages use the POSIX format with underscores.
-                lang_str += "_";
-                lang_str += region.as_str();
-            }
-            manpage_dir.join(lang_str)
-        };
-        out_dir.push("man1");
-
-        i18n::load_languages(&[lang]);
-        Cli::build().generate_manpages(&out_dir)?;
-    }
+    let mut manpage_dir = out_dir.join("manpages");
+    manpage_dir.push("man1");
+    Cli::build().generate_manpages(&manpage_dir)?;
 
     Ok(())
 }

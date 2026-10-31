@@ -56,7 +56,6 @@ rand = "0.8"
 bech32 = "0.11"
 
 # Parsing
-cookie-factory = "0.3.1"
 nom = { version = "8", default-features = false, features = ["alloc"] }
 
 # Secret management
@@ -67,12 +66,6 @@ zeroize = "1"
 
 # Compression
 flate2 = "1"
-
-# Localization
-i18n-embed = { version = "0.16", features = ["fluent-system"] }
-i18n-embed-fl = "0.10"
-lazy_static = "1"
-rust-embed = "8"
 
 # CLI
 chrono = "0.4"

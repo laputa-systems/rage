@@ -22,7 +22,6 @@ age-core.workspace = true
 base64.workspace = true
 chacha20poly1305.workspace = true
 hmac.workspace = true
-i18n-embed.workspace = true
 rand.workspace = true
 
 # OpenSSH-specific dependencies:
@@ -43,15 +42,11 @@ pinentry = { workspace = true, optional = true }
 # (Breaking upgrades to these are usually backwards-compatible, but check MSRVs.)
 bech32.workspace = true
 cipher = { version = "0.4.3", features = ["alloc"] }
-cookie-factory.workspace = true
 hkdf.workspace = true
 hpke = { workspace = true, features = ["p256"] }
-i18n-embed-fl.workspace = true
-lazy_static.workspace = true
 ml-kem.workspace = true
 nom.workspace = true
 p256.workspace = true
-rust-embed.workspace = true
 scrypt.workspace = true
 sha2.workspace = true
 sha3.workspace = true
@@ -81,17 +76,15 @@ console = { workspace = true, optional = true, features = ["std"] }
 is-terminal = { version = "0.4", optional = true }
 rpassword = { version = "7", optional = true }
 
-[target.'cfg(any(unix, windows))'.dependencies]
+[target.'cfg(unix)'.dependencies]
 # Plugin management
 which = { version = "8", optional = true }
-wsl = { version = "0.1", optional = true }
 
 [dev-dependencies]
 criterion = "0.5"
 flate2.workspace = true
 futures-test = "0.3"
 hex = "0.4"
-i18n-embed = { workspace = true, features = ["desktop-requester"] }
 proptest = "1"
 test-case = "3"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
@@ -107,7 +100,7 @@ default = []
 armor = []
 async = ["futures", "memchr"]
 cli-common = ["console", "is-terminal", "pinentry", "rpassword"]
-plugin = ["age-core/plugin", "which", "wsl"]
+plugin = ["age-core/plugin", "which"]
 ssh = [
     "aes",
     "aes-gcm",

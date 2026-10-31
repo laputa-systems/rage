@@ -545,20 +545,20 @@ mod read_ssh {
 }
 
 mod write_ssh {
-    use cookie_factory::{bytes::be_u32, combinator::slice, sequence::tuple, SerializeFn};
     use num_traits::identities::Zero;
-    use rsa::{traits::PublicKeyParts, BigUint};
-    use std::io::Write;
+    use rsa::{BigUint, traits::PublicKeyParts};
+    use std::io::{self, Write};
 
     use super::SSH_RSA_KEY_PREFIX;
 
     /// Writes the SSH `string` data type.
-    fn string<S: AsRef<[u8]>, W: Write>(value: S) -> impl SerializeFn<W> {
-        tuple((be_u32(value.as_ref().len() as u32), slice(value)))
+    fn string<W: Write>(w: &mut W, value: &[u8]) -> io::Result<()> {
+        w.write_all(&(value.len() as u32).to_be_bytes())?;
+        w.write_all(value)
     }
 
     /// Writes the SSH `mpint` data type.
-    fn mpint<W: Write>(value: &BigUint) -> impl SerializeFn<W> {
+    fn mpint<W: Write>(w: &mut W, value: &BigUint) -> io::Result<()> {
         let mut bytes = value.to_bytes_be();
 
         // From RFC 4251 section 5:
@@ -573,7 +573,7 @@ mod write_ssh {
             bytes.insert(0, 0);
         }
 
-        string(bytes)
+        string(w, &bytes)
     }
 
     /// Writes an SSH-encoded RSA public key.
@@ -584,11 +584,12 @@ mod write_ssh {
     /// mpint     e
     /// mpint     n
     /// ```
-    pub(super) fn rsa_pubkey<W: Write>(pubkey: &rsa::RsaPublicKey) -> impl SerializeFn<W> {
-        tuple((
-            string(SSH_RSA_KEY_PREFIX),
-            mpint(pubkey.e()),
-            mpint(pubkey.n()),
-        ))
+    pub(super) fn rsa_pubkey<W: Write>(
+        w: &mut W,
+        pubkey: &rsa::RsaPublicKey,
+    ) -> io::Result<()> {
+        string(w, SSH_RSA_KEY_PREFIX.as_bytes())?;
+        mpint(w, pubkey.e())?;
+        mpint(w, pubkey.n())
     }
 }

@@ -235,16 +235,7 @@ impl Plugin {
         }
 
         let binary_name = binary_name(name);
-        match which::which(&binary_name).or_else(|e| {
-            // If we are running in WSL, try appending `.exe`; plugins installed in
-            // the Windows host are available to us, but `which` only trials PATHEXT
-            // extensions automatically when compiled for Windows.
-            if wsl::is_wsl() {
-                which::which(format!("{}.exe", binary_name)).map_err(|_| e)
-            } else {
-                Err(e)
-            }
-        }) {
+        match which::which(&binary_name) {
             Ok(path) => Ok(Plugin { binary_name, path }),
             Err(_) => Err(ResolveError::MissingPlugin { binary_name }),
         }

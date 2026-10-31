@@ -21,7 +21,7 @@ maintenance = { status = "experimental" }
 # (Breaking upgrades to these require a breaking upgrade to this crate.)
 bech32.workspace = true
 chacha20poly1305.workspace = true
-hpke.workspace = true
+hpke = { workspace = true, features = ["nistp"] }
 io_tee = "0.1.1"
 nom.workspace = true
 secrecy.workspace = true

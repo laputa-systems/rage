@@ -84,17 +84,10 @@ fn bench(c: &mut Criterion_) {
     group.finish();
 }
 
-#[cfg(unix)]
 criterion_group!(
     name = benches;
     config = setup_criterion()
         .with_profiler(PProfProfiler::new(100, Output::Flamegraph(None)));
-    targets = bench
-);
-#[cfg(not(unix))]
-criterion_group!(
-    name = benches;
-    config = setup_criterion();
     targets = bench
 );
 criterion_main!(benches);

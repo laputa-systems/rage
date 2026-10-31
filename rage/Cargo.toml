@@ -110,12 +110,8 @@ chrono.workspace = true
 clap = { workspace = true, features = ["string", "unstable-styles"] }
 console.workspace = true
 env_logger.workspace = true
-i18n-embed = { workspace = true, features = ["desktop-requester"] }
-i18n-embed-fl.workspace = true
-lazy_static.workspace = true
 log.workspace = true
 pinentry.workspace = true
-rust-embed.workspace = true
 
 # rage-mount dependencies
 # Currently MSRV 1.88
@@ -138,10 +134,6 @@ clap = { workspace = true, features = ["string", "unstable-styles"] }
 clap_complete = "4"
 clap_mangen = "0.2"
 flate2.workspace = true
-i18n-embed.workspace = true
-i18n-embed-fl.workspace = true
-lazy_static.workspace = true
-rust-embed.workspace = true
 
 [dev-dependencies]
 trycmd = ">= 0.15.0, < 0.15.10" # trycmd 0.15.10 breaks line ending normalization on Windows.

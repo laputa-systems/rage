@@ -11,7 +11,6 @@ use age::{
     secrecy::ExposeSecret,
 };
 use clap::{CommandFactory, Parser};
-use i18n_embed::DesktopLanguageRequester;
 
 use std::io;
 use std::path::Path;
@@ -21,21 +20,10 @@ use cli::AgeOptions;
 
 mod error;
 
-mod i18n;
-
-#[macro_export]
-macro_rules! fl {
-    ($message_id:literal) => {{
-        i18n_embed_fl::fl!($crate::i18n::LANGUAGE_LOADER, $message_id)
-    }};
-
-    ($message_id:literal, $($args:expr),* $(,)?) => {{
-        i18n_embed_fl::fl!($crate::i18n::LANGUAGE_LOADER, $message_id, $($args), *)
-    }};
-}
+mod messages;
 
 macro_rules! warning {
-    ($warning_id:literal) => {{
+    ($warning_id:tt) => {{
         eprintln!("{}", fl!("warning-msg", warning = fl!($warning_id)));
     }};
 }
@@ -108,8 +96,6 @@ fn encrypt(opts: AgeOptions) -> Result<(), error::EncryptError> {
         (Format::Binary, file_io::OutputFormat::Binary)
     };
 
-    #[cfg(not(unix))]
-    let has_file_argument = opts.input.is_some();
 
     let (input, output) = set_up_io(opts.input, opts.output, output_format)?;
 
@@ -133,15 +119,6 @@ fn encrypt(opts: AgeOptions) -> Result<(), error::EncryptError> {
         }
         if !opts.recipients_file.is_empty() {
             return Err(error::EncryptError::MixedRecipientsFileAndPassphrase);
-        }
-
-        // The `rpassword` crate opens `/dev/tty` directly on Unix, so we don't have
-        // any conflict with stdin.
-        #[cfg(not(unix))]
-        {
-            if !has_file_argument {
-                return Err(error::EncryptError::PassphraseWithoutFileArgument);
-            }
         }
 
         match read_or_generate_passphrase() {
@@ -250,9 +227,6 @@ fn decrypt(opts: AgeOptions) -> Result<(), error::DecryptError> {
         return Err(error::DecryptError::MixedIdentityAndPluginName);
     }
 
-    #[cfg(not(unix))]
-    let has_file_argument = opts.input.is_some();
-
     let (input, output) = set_up_io(opts.input, opts.output, file_io::OutputFormat::Unknown)?;
 
     let is_stdin = match input {
@@ -303,15 +277,6 @@ fn decrypt(opts: AgeOptions) -> Result<(), error::DecryptError> {
             return Err(error::DecryptError::MixedIdentityAndPassphrase);
         }
 
-        // The `rpassword` crate opens `/dev/tty` directly on Unix, so we don't have
-        // any conflict with stdin.
-        #[cfg(not(unix))]
-        {
-            if !has_file_argument {
-                return Err(error::DecryptError::PassphraseWithoutFileArgument);
-            }
-        }
-
         match read_secret(&fl!("type-passphrase"), &fl!("prompt-passphrase"), None) {
             Ok(passphrase) => {
                 let mut identity = scrypt::Identity::new(passphrase);
@@ -359,10 +324,6 @@ fn main() -> Result<(), error::Error> {
         .filter_level(log::LevelFilter::Off)
         .parse_default_env()
         .init();
-
-    let requested_languages = DesktopLanguageRequester::requested_languages();
-    i18n::load_languages(&requested_languages);
-    age::localizer().select(&requested_languages).unwrap();
 
     // If you are piping input with no other args, this will not allow
     // it.

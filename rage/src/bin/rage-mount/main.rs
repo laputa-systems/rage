@@ -9,7 +9,6 @@ use age::{
 use clap::{CommandFactory, Parser};
 use fuse_mt::FilesystemMT;
 use fuser::MountOption;
-use i18n_embed::DesktopLanguageRequester;
 use log::info;
 
 use std::fmt;
@@ -21,38 +20,26 @@ mod cli;
 mod tar;
 mod zip;
 
-mod i18n {
-    include!("../rage/i18n.rs");
-}
-
-#[macro_export]
-macro_rules! fl {
-    ($message_id:literal) => {{
-        i18n_embed_fl::fl!($crate::i18n::LANGUAGE_LOADER, $message_id)
-    }};
-
-    ($message_id:literal, $($args:expr),* $(,)?) => {{
-        i18n_embed_fl::fl!($crate::i18n::LANGUAGE_LOADER, $message_id, $($args), *)
-    }};
-}
+#[path = "../rage/messages.rs"]
+mod messages;
 
 macro_rules! wfl {
-    ($f:ident, $message_id:literal) => {
+    ($f:ident, $message_id:tt) => {
         write!($f, "{}", fl!($message_id))
     };
 
-    ($f:ident, $message_id:literal, $($args:expr),* $(,)?) => {
-        write!($f, "{}", fl!($message_id, $($args), *))
+    ($f:ident, $message_id:tt, $($args:tt)*) => {
+        write!($f, "{}", fl!($message_id, $($args)*))
     };
 }
 
 macro_rules! wlnfl {
-    ($f:ident, $message_id:literal) => {
+    ($f:ident, $message_id:tt) => {
         writeln!($f, "{}", fl!($message_id))
     };
 
-    ($f:ident, $message_id:literal, $($args:expr),* $(,)?) => {
-        writeln!($f, "{}", fl!($message_id, $($args), *))
+    ($f:ident, $message_id:tt, $($args:tt)*) => {
+        writeln!($f, "{}", fl!($message_id, $($args)*))
     };
 }
 
@@ -177,10 +164,6 @@ fn main() -> Result<(), Error> {
         .filter_level(log::LevelFilter::Off)
         .parse_default_env()
         .init();
-
-    let requested_languages = DesktopLanguageRequester::requested_languages();
-    i18n::load_languages(&requested_languages);
-    age::localizer().select(&requested_languages).unwrap();
 
     if console::user_attended() && args().len() == 1 {
         cli::AgeMountOptions::command().print_help()?;

@@ -4,12 +4,12 @@ use std::io;
 use age::IdentityFileConvertError;
 
 macro_rules! wlnfl {
-    ($f:ident, $message_id:literal) => {
+    ($f:ident, $message_id:tt) => {
         writeln!($f, "{}", $crate::fl!($message_id))
     };
 
-    ($f:ident, $message_id:literal, $($args:expr),* $(,)?) => {
-        writeln!($f, "{}", $crate::fl!($message_id, $($args), *))
+    ($f:ident, $message_id:tt, $($args:tt)*) => {
+        writeln!($f, "{}", $crate::fl!($message_id, $($args)*))
     };
 }
 

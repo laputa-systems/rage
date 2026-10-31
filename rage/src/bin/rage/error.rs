@@ -2,22 +2,22 @@ use std::fmt;
 use std::io;
 
 macro_rules! wfl {
-    ($f:ident, $message_id:literal) => {
+    ($f:ident, $message_id:tt) => {
         write!($f, "{}", $crate::fl!($message_id))
     };
 
-    ($f:ident, $message_id:literal, $($args:expr),* $(,)?) => {
-        write!($f, "{}", $crate::fl!($message_id, $($args), *))
+    ($f:ident, $message_id:tt, $($args:tt)*) => {
+        write!($f, "{}", $crate::fl!($message_id, $($args)*))
     };
 }
 
 macro_rules! wlnfl {
-    ($f:ident, $message_id:literal) => {
+    ($f:ident, $message_id:tt) => {
         writeln!($f, "{}", $crate::fl!($message_id))
     };
 
-    ($f:ident, $message_id:literal, $($args:expr),* $(,)?) => {
-        writeln!($f, "{}", $crate::fl!($message_id, $($args), *))
+    ($f:ident, $message_id:tt, $($args:tt)*) => {
+        writeln!($f, "{}", $crate::fl!($message_id, $($args)*))
     };
 }
 
@@ -33,8 +33,6 @@ pub(crate) enum EncryptError {
     MixedRecipientAndPassphrase,
     MixedRecipientsFileAndPassphrase,
     PassphraseTimedOut,
-    #[cfg(not(unix))]
-    PassphraseWithoutFileArgument,
     PluginNameFlag,
 }
 
@@ -87,10 +85,6 @@ impl fmt::Display for EncryptError {
                 wfl!(f, "err-enc-mixed-recipients-file-passphrase")
             }
             EncryptError::PassphraseTimedOut => wfl!(f, "err-passphrase-timed-out"),
-            #[cfg(not(unix))]
-            EncryptError::PassphraseWithoutFileArgument => {
-                wfl!(f, "err-enc-passphrase-without-file")
-            }
             EncryptError::PluginNameFlag => {
                 wfl!(f, "err-enc-plugin-name-flag")
             }
@@ -122,8 +116,6 @@ pub(crate) enum DecryptError {
     MixedIdentityAndPluginName,
     PassphraseFlag,
     PassphraseTimedOut,
-    #[cfg(not(unix))]
-    PassphraseWithoutFileArgument,
     RecipientFlag,
     RecipientsFileFlag,
 }
@@ -187,10 +179,6 @@ impl fmt::Display for DecryptError {
                 wfl!(f, "rec-dec-passphrase-flag")
             }
             DecryptError::PassphraseTimedOut => wfl!(f, "err-passphrase-timed-out"),
-            #[cfg(not(unix))]
-            DecryptError::PassphraseWithoutFileArgument => {
-                wfl!(f, "err-dec-passphrase-without-file-win")
-            }
             DecryptError::RecipientFlag => {
                 wlnfl!(f, "err-dec-recipient-flag")?;
                 wfl!(f, "rec-dec-recipient-flag")

@@ -21,7 +21,6 @@ maintenance = { status = "experimental" }
 # (Breaking upgrades to these require a breaking upgrade to this crate.)
 bech32.workspace = true
 chacha20poly1305.workspace = true
-cookie-factory.workspace = true
 hpke.workspace = true
 io_tee = "0.1.1"
 nom.workspace = true

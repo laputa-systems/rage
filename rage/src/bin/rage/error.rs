@@ -195,6 +195,7 @@ pub(crate) enum Error {
     Decryption(DecryptError),
     Encryption(EncryptError),
     IdentityFlagAmbiguous,
+    Keygen(crate::keygen::error::Error),
     MixedEncryptAndDecrypt,
     SameInputAndOutput(String),
 }
@@ -211,14 +212,13 @@ impl From<EncryptError> for Error {
     }
 }
 
-// Rust only supports `fn main() -> Result<(), E: Debug>`, so we implement `Debug`
-// manually to provide the error output we want.
 impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::Decryption(e) => writeln!(f, "{e}")?,
             Error::Encryption(e) => writeln!(f, "{e}")?,
             Error::IdentityFlagAmbiguous => wlnfl!(f, "err-identity-ambiguous")?,
+            Error::Keygen(e) => return write!(f, "{e:?}"),
             Error::MixedEncryptAndDecrypt => wlnfl!(f, "err-mixed-encrypt-decrypt")?,
             Error::SameInputAndOutput(filename) => {
                 wlnfl!(f, "err-same-input-and-output", filename = filename.as_str())?

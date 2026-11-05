@@ -19,6 +19,7 @@ mod cli;
 use cli::AgeOptions;
 
 mod error;
+mod keygen;
 
 mod messages;
 
@@ -325,8 +326,21 @@ fn main() -> Result<(), error::Error> {
         .parse_default_env()
         .init();
 
-    // If you are piping input with no other args, this will not allow
-    // it.
+    let binary_name = std::env::args_os()
+        .next()
+        .and_then(|a| Path::new(&a).file_name().map(|n| n.to_string_lossy().to_string()))
+        .unwrap_or_default();
+    let mut raw_args: Vec<std::ffi::OsString> = std::env::args_os().collect();
+    let is_keygen = binary_name.contains("keygen")
+        || (raw_args.len() > 1 && raw_args[1] == "keygen");
+
+    if is_keygen {
+        if raw_args.len() > 1 && raw_args[1] == "keygen" {
+            raw_args.remove(1);
+        }
+        return keygen::run(raw_args).map_err(error::Error::Keygen);
+    }
+
     if console::user_attended() && args().len() == 1 {
         AgeOptions::command()
             .print_help()
@@ -344,7 +358,6 @@ fn main() -> Result<(), error::Error> {
     }
 
     if let (Some(in_file), Some(out_file)) = (&opts.input, &opts.output) {
-        // Check that the given filenames do not correspond to the same file.
         let in_path = Path::new(&in_file);
         let out_path = Path::new(&out_file);
         match (in_path.canonicalize(), out_path.canonicalize()) {

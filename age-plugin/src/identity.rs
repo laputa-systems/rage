@@ -330,7 +330,7 @@ pub(crate) fn run_v1<P: IdentityPluginV1>(mut plugin: P) -> io::Result<()> {
         let stanzas = match (identities, recipient_stanzas) {
             (Ok(()), Ok(stanzas)) => stanzas,
             (Err(errors1), Err(errors2)) => {
-                for error in errors1.into_iter().chain(errors2.into_iter()) {
+                for error in errors1.into_iter().chain(errors2) {
                     error.send(&mut phase)?;
                 }
                 return Ok(());

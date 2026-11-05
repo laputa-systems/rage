@@ -16,7 +16,7 @@ RUN apk add --no-cache \
     musl-dev=1.2.6-r3 \
     libgcc=15.2.0-r5 \
     git=2.54.0-r0 \
-    tzdata=2026e-r0
+    tzdata=2026f-r0
 
 RUN ar rcs /usr/lib/libutil.a
 
@@ -77,6 +77,7 @@ RUN host_target="$(rustc -vV | awk '/^host:/ {print $2}')" \
     && host_libdir="$(rustc --print target-libdir)" \
     && for obj in crtbegin.o crtbeginS.o crtbeginT.o crtend.o crtendS.o; do \
         ln -sf "/usr/lib/e-crt/$host_target/$obj" "$host_libdir/$obj"; \
+        ln -sf "/usr/lib/e-crt/$host_target/$obj" "/usr/lib/$obj"; \
     done
 
 RUN host_libdir="$(rustc --print target-libdir)" \

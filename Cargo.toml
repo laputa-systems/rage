@@ -16,7 +16,7 @@ license = "MIT OR Apache-2.0"
 
 [workspace.dependencies]
 age = { version = "0.12.1", path = "age" }
-age-core = { version = "0.12.0", path = "age-core", registry = "mycrates" }
+age-core = { version = "0.13.0", path = "age-core", registry = "mycrates" }
 
 # Dependencies required by the age specification:
 # - Base64 from RFC 4648

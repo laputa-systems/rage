@@ -20,7 +20,7 @@ age-core = { version = "0.12.0", path = "age-core", registry = "mycrates" }
 
 # Dependencies required by the age specification:
 # - Base64 from RFC 4648
-base64 = "0.22"
+base64 = "0.23"
 
 # - ChaCha20-Poly1305 from RFC 7539
 chacha20poly1305 = { version = "0.11", default-features = false, features = [
@@ -46,7 +46,7 @@ hmac = "0.13"
 sha2 = "0.11"
 
 # - HPKE from RFC 9180
-hpke = { version = "0.14", default-features = false, features = [
+hpke = { version = "0.15", default-features = false, features = [
     "alloc",
     "chacha",
 ] }
@@ -58,7 +58,7 @@ scrypt = { version = "0.12", default-features = false }
 rand = "0.10"
 
 # - Key encoding
-bech32 = "0.11"
+bech32 = "0.12"
 
 # Parsing
 nom = { version = "8", default-features = false, features = ["alloc"] }
@@ -74,9 +74,9 @@ flate2 = "1"
 
 # CLI
 chrono = "0.4"
-clap = { version = "4.3", features = ["derive"] }
+clap = { version = "4.6", features = ["derive"] }
 console = { version = "0.16", default-features = false }
-env_logger = "0.10"
+env_logger = "0.11"
 log = "0.4"
 
 [workspace.lints.rust]

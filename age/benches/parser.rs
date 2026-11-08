@@ -1,40 +1,25 @@
 use age::{Decryptor, Encryptor, x25519};
-use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
-
-#[cfg(unix)]
-use pprof::criterion::{Output, PProfProfiler};
-
+use rustybench::{Bencher, counter::ItemsCount};
 use std::io::Write;
 
-fn bench(c: &mut Criterion) {
-    let recipients: Vec<_> = (0..10)
-        .map(|_| x25519::Identity::generate().to_public())
-        .collect();
-    let mut group = c.benchmark_group("header");
-
-    for count in 1..10 {
-        group.throughput(Throughput::Elements(count as u64));
-        group.bench_function(BenchmarkId::new("parse", count), |b| {
-            let mut encrypted = vec![];
-            let mut output =
-                Encryptor::with_recipients(recipients.iter().take(count).map(|r| r as _))
-                    .unwrap()
-                    .wrap_output(&mut encrypted)
-                    .unwrap();
-            output.write_all(&[]).unwrap();
-            output.finish().unwrap();
-
-            b.iter(|| Decryptor::new_buffered(&encrypted[..]))
-        });
-    }
-
-    group.finish();
+fn main() {
+    rustybench::main();
 }
 
-criterion_group!(
-    name = benches;
-    config = Criterion::default()
-        .with_profiler(PProfProfiler::new(100, Output::Flamegraph(None)));
-    targets = bench
-);
-criterion_main!(benches);
+#[rustybench::bench(args = [1, 2, 3, 4, 5, 6, 7, 8, 9])]
+fn parse(bencher: Bencher, count: usize) {
+    let recipients: Vec<_> = (0..count)
+        .map(|_| x25519::Identity::generate().to_public())
+        .collect();
+    let mut encrypted = vec![];
+    let mut output = Encryptor::with_recipients(recipients.iter().map(|r| r as _))
+        .unwrap()
+        .wrap_output(&mut encrypted)
+        .unwrap();
+    output.write_all(&[]).unwrap();
+    output.finish().unwrap();
+
+    bencher.counter(ItemsCount::new(count)).bench_local(|| {
+        Decryptor::new_buffered(rustybench::black_box(&encrypted[..])).unwrap()
+    });
+}

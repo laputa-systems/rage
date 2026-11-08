@@ -86,19 +86,13 @@ rpassword = { version = "7", optional = true }
 which = { version = "8", optional = true }
 
 [dev-dependencies]
-criterion = "0.5"
+rustybench = "0.4"
 flate2.workspace = true
 futures-test = "0.3"
 hex = "0.4"
 proptest = "1"
 test-case = "3"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-
-[target.'cfg(unix)'.dev-dependencies]
-pprof = { version = "0.15", features = ["criterion", "flamegraph"] }
-
-[target.'cfg(any(target_arch = "x86", target_arch = "x86_64"))'.dev-dependencies]
-criterion-cycles-per-byte = "0.6"
 
 [features]
 default = []

@@ -182,6 +182,12 @@ feature flags:
 Builds include the Git commit ID in `--version` output. Source archives without
 Git metadata must set `RAGE_GIT_SHA` to a hexadecimal commit ID when building.
 
+Maintainers can run `make publish` from a clean working tree to bump the
+`age-core` minor version, commit and tag the release, and publish it to the
+`mycrates` registry using `stuff`. The command requires `curl`, `jaq`, and
+`stuff`; rerun it to resume an interrupted publication. It does not push the
+release commit or tag.
+
 ## Rust Library
 
 Applications wishing to use rage as a library should use the [`age`](https://crates.io/crates/age)

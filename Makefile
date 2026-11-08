@@ -6,7 +6,7 @@ TARGET_ENV := $(shell printf '%s' "$(TARGET)" | tr '[:lower:]-' '[:upper:]_')
 CARGO_CMD  := $(if $(findstring -linux-musl,$(TARGET)),$(shell command -v musl-cargo 2>/dev/null || printf cargo),cargo)
 cargo = $(if $(findstring -linux-musl,$(TARGET)),,$(if $(filter release-static test,$(1)),CARGO_TARGET_$(TARGET_ENV)_LINKER=clang ,)$(if $(filter release-static,$(1)),RUSTFLAGS="-Cpanic=abort")) MUSL_TARGET="$(TARGET)" MUSL_BUILD_MODE="$(1)" $(CARGO_CMD)
 
-.PHONY: build test check test-ci release verify-release install lint
+.PHONY: build test check test-ci release verify-release install lint publish
 
 build:
 	$(call cargo,dev) build
@@ -44,6 +44,9 @@ verify-release:
 
 lint:
 	cargo clippy --workspace --all-targets -- -D warnings
+
+publish:
+	./tools/publish_age_core.sh
 
 install: release
 	@set -eu; \

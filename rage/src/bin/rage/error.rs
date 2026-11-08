@@ -195,7 +195,7 @@ pub(crate) enum Error {
     Decryption(DecryptError),
     Encryption(EncryptError),
     IdentityFlagAmbiguous,
-    Keygen(crate::keygen::error::Error),
+    Keygen(super::keygen::error::Error),
     MixedEncryptAndDecrypt,
     SameInputAndOutput(String),
 }

@@ -173,15 +173,14 @@ When building with Cargo, you can configure rage using `--no-default-features`
 and `--features comma,separated,flags` to enable or disable the following
 feature flags:
 
-- `mount` enables the `rage-mount` tool, which can mount age-encrypted TAR or
-  ZIP archives as read-only. It is currently only usable on Unix systems (as it
-  relies on `libfuse`), and has an MSRV of 1.88.
-
 - `ssh` (enabled by default) enables support for reusing existing SSH key files
   for age encryption.
 
 - `unstable` enables in-development functionality. Anything behind this feature
   flag has no stability or interoperability guarantees.
+
+Builds include the Git commit ID in `--version` output. Source archives without
+Git metadata must set `RAGE_GIT_SHA` to a hexadecimal commit ID when building.
 
 ## Rust Library
 

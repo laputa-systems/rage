@@ -126,30 +126,6 @@ criteria = "safe-to-deploy"
 version = "0.5.2"
 criteria = "safe-to-deploy"
 
-[[exemptions.clap]]
-version = "4.6.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.clap_builder]]
-version = "4.6.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.clap_complete]]
-version = "4.6.7"
-criteria = "safe-to-deploy"
-
-[[exemptions.clap_derive]]
-version = "4.6.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.clap_lex]]
-version = "1.1.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.clap_mangen]]
-version = "0.2.33"
-criteria = "safe-to-deploy"
-
 [[exemptions.cmov]]
 version = "0.5.4"
 criteria = "safe-to-deploy"
@@ -288,14 +264,6 @@ criteria = "safe-to-run"
 
 [[exemptions.flate2]]
 version = "1.1.9"
-criteria = "safe-to-deploy"
-
-[[exemptions.fuse_mt]]
-version = "0.6.3"
-criteria = "safe-to-deploy"
-
-[[exemptions.fuser]]
-version = "0.16.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.futures]]

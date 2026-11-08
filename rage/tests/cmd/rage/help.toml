@@ -10,7 +10,7 @@ Arguments:
 
 Options:
   -h, --help                    Print this help message and exit.
-  -V, --version                 Print version info and exit.
+  -V, -v, --version             Print version info and exit.
   -e, --encrypt                 Encrypt the input (the default).
   -d, --decrypt                 Decrypt the input.
   -p, --passphrase              Encrypt with a passphrase instead of recipients.
@@ -21,6 +21,13 @@ Options:
   -i, --identity <IDENTITY>     Use the identity file at IDENTITY. May be repeated.
   -j <PLUGIN-NAME>              Use age-plugin-PLUGIN-NAME in its default mode as an identity.
   -o, --output <OUTPUT>         Write the result to the file at path OUTPUT.
+
+Command:
+  rage[EXE] keygen [OPTIONS] [INPUT]
+    Generate age-compatible encryption key pairs
+    Inherits --help and --version.
+    -o, --output <OUTPUT>         Write the result to the file at path OUTPUT. Defaults to standard output.
+    -y                            Convert an identity file to a recipients file.
 
 INPUT defaults to standard input, and OUTPUT defaults to standard output.
 If OUTPUT exists, it will be overwritten.

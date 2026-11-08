@@ -9,7 +9,6 @@ use age_plugin::{
     recipient::{self, RecipientPluginV1},
     run_state_machine,
 };
-use clap::Parser;
 
 use std::collections::{HashMap, HashSet};
 use std::convert::Infallible;
@@ -216,24 +215,35 @@ impl IdentityPluginV1 for IdentityPlugin {
     }
 }
 
-#[derive(Debug, Parser)]
-struct PluginOptions {
-    #[arg(help = "run the given age plugin state machine", long)]
-    age_plugin: Option<String>,
-}
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut parser = lexopt::Parser::from_env();
+    let mut state_machine: Option<String> = None;
+    while let Some(arg) = parser.next()? {
+        match arg {
+            lexopt::Arg::Long("age-plugin") if state_machine.is_none() => {
+                state_machine = Some(parser.value()?.into_string().map_err(|_| "invalid state machine")?);
+            }
+            lexopt::Arg::Short('h') | lexopt::Arg::Long("help") => {
+                println!("Usage: age-plugin-unencrypted [--age-plugin <AGE_PLUGIN>]");
+                return Ok(());
+            }
+            lexopt::Arg::Short('V') | lexopt::Arg::Long("version") => {
+                println!("age-plugin-unencrypted {}", env!("CARGO_PKG_VERSION"));
+                return Ok(());
+            }
+            _ => return Err(arg.unexpected().into()),
+        }
+    }
 
-fn main() -> io::Result<()> {
-    let opts = PluginOptions::parse();
-
-    if let Some(state_machine) = opts.age_plugin {
+    if let Some(state_machine) = state_machine {
         if let Ok(s) = env::var("AGE_HALF_PLUGIN") {
-            match s.as_str() {
+            Ok(match s.as_str() {
                 "recipient" => run_state_machine(&state_machine, RecipientHandler),
                 "identity" => run_state_machine(&state_machine, IdentityHandler),
                 _ => panic!("Env variable AGE_HALF_PLUGIN={s} has unknown value. Boom! 💥"),
-            }
+            }?)
         } else {
-            run_state_machine(&state_machine, FullHandler)
+            Ok(run_state_machine(&state_machine, FullHandler)?)
         }
     } else {
         // A real plugin would generate a new identity here.

@@ -67,7 +67,7 @@ users will use identity files containing identities that specify that plugin nam
 
 ## Example plugin binary
 
-The following example uses `clap` to parse CLI arguments, but any argument parsing
+The following example uses `lexopt` to parse CLI arguments, but any argument parsing
 logic will work as long as it can detect the `--age-plugin=STATE_MACHINE` flag.
 
 ```rust
@@ -76,12 +76,26 @@ use age_plugin::{
     identity::{self, IdentityPluginV1},
     print_new_identity,
     recipient::{self, RecipientPluginV1},
-    Callbacks, run_state_machine,
+    Callbacks, PluginHandler, run_state_machine,
 };
-use clap::Parser;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io;
+
+struct Handler;
+
+impl PluginHandler for Handler {
+    type RecipientV1 = RecipientPlugin;
+    type IdentityV1 = IdentityPlugin;
+
+    fn recipient_v1(self) -> io::Result<Self::RecipientV1> {
+        Ok(RecipientPlugin)
+    }
+
+    fn identity_v1(self) -> io::Result<Self::IdentityV1> {
+        Ok(IdentityPlugin)
+    }
+}
 
 struct RecipientPlugin;
 
@@ -101,6 +115,10 @@ impl RecipientPluginV1 for RecipientPlugin {
         plugin_name: &str,
         bytes: &[u8]
     ) -> Result<(), recipient::Error> {
+        todo!()
+    }
+
+    fn labels(&mut self) -> HashSet<String> {
         todo!()
     }
 
@@ -134,22 +152,21 @@ impl IdentityPluginV1 for IdentityPlugin {
     }
 }
 
-#[derive(Debug, Parser)]
-struct PluginOptions {
-    #[arg(help = "run the given age plugin state machine", long)]
-    age_plugin: Option<String>,
-}
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut parser = lexopt::Parser::from_env();
+    let mut state_machine = None;
+    while let Some(arg) = parser.next()? {
+        match arg {
+            lexopt::Arg::Long("age-plugin") if state_machine.is_none() => {
+                state_machine = Some(parser.value()?.into_string().map_err(|_| "invalid state machine")?);
+            }
+            _ => return Err(arg.unexpected().into()),
+        }
+    }
 
-fn main() -> io::Result<()> {
-    let opts = PluginOptions::parse();
-
-    if let Some(state_machine) = opts.age_plugin {
+    if let Some(state_machine) = state_machine {
         // The plugin was started by an age client; run the state machine.
-        run_state_machine(
-            &state_machine,
-            Some(|| RecipientPlugin),
-            Some(|| IdentityPlugin),
-        )?;
+        run_state_machine(&state_machine, Handler)?;
         return Ok(());
     }
 

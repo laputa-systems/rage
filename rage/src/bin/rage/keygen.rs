@@ -1,22 +1,33 @@
 use age::{cli_common::file_io, secrecy::ExposeSecret};
-use clap::Parser;
 use std::ffi::OsString;
 use std::io::{self, Write};
 
 #[path = "../rage-keygen/cli.rs"]
-mod cli;
+pub(crate) mod cli;
 
 #[path = "../rage-keygen/error.rs"]
 pub(crate) mod error;
 
-pub(crate) fn run(args: Vec<OsString>) -> Result<(), error::Error> {
-    let _ = env_logger::builder()
-        .format_timestamp(None)
-        .filter_level(log::LevelFilter::Off)
-        .parse_default_env()
-        .try_init();
+pub(crate) enum RunError {
+    Parse(cli::ParseError),
+    Error(error::Error),
+}
 
-    let opts = cli::AgeOptions::parse_from(args);
+pub(crate) fn run(mut args: Vec<OsString>) -> Result<(), RunError> {
+    if !args.is_empty() {
+        args.remove(0);
+    }
+    let opts = match cli::AgeOptions::parse(args).map_err(RunError::Parse)? {
+        cli::ParseOutcome::Help => {
+            println!("{}", cli::help());
+            return Ok(());
+        }
+        cli::ParseOutcome::Version => {
+            println!("{}", cli::version());
+            return Ok(());
+        }
+        cli::ParseOutcome::Options(opts) => opts,
+    };
 
     let output = file_io::OutputWriter::new(
         opts.output,
@@ -25,12 +36,13 @@ pub(crate) fn run(args: Vec<OsString>) -> Result<(), error::Error> {
         0o600,
         false,
     )
-    .map_err(error::Error::FailedToOpenOutput)?;
+    .map_err(error::Error::FailedToOpenOutput)
+    .map_err(RunError::Error)?;
 
     if opts.convert {
-        convert(opts.input, output)
+        convert(opts.input, output).map_err(RunError::Error)
     } else {
-        generate(output).map_err(error::Error::FailedToWriteOutput)
+        generate(output).map_err(error::Error::FailedToWriteOutput).map_err(RunError::Error)
     }
 }
 

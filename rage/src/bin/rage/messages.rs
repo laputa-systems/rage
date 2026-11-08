@@ -35,12 +35,6 @@ macro_rules! fl {
         ("err-identity-ambiguous") => { ::std::string::String::from("-i/--identity requires either -e/--encrypt or -d/--decrypt.") };
         ("err-mixed-encrypt-decrypt") => { ::std::string::String::from("-e/--encrypt can't be used with -d/--decrypt.") };
         ("err-mixed-identity-and-plugin-name") => { ::std::string::String::from("-i/--identity can't be used with -j.") };
-        ("err-mnt-missing-filename") => { ::std::string::String::from("Missing filename.") };
-        ("err-mnt-missing-mountpoint") => { ::std::string::String::from("Missing mountpoint.") };
-        ("err-mnt-missing-types") => { ::std::string::String::from("Missing -t/--types.") };
-        ("err-mnt-unknown-type", $($args:tt)*) => {
-            ::std::format!("Unknown filesystem type \"{fs_type}\"", $($args)*)
-        };
         ("err-passphrase-timed-out") => { ::std::string::String::from("Timed out waiting for passphrase input.") };
         ("err-same-input-and-output", $($args:tt)*) => {
             ::std::format!("Input and output are the same file '{filename}'.", $($args)*)
@@ -50,11 +44,6 @@ macro_rules! fl {
         ("err-ux-C") => { ::std::string::String::from("                          ") };
         ("flags-header") => { ::std::string::String::from("Options") };
         ("help-arg-input") => { ::std::string::String::from("Path to a file to read from.") };
-        ("help-arg-mnt-filename") => { ::std::string::String::from("The encrypted filesystem to mount.") };
-        ("help-arg-mnt-mountpoint") => { ::std::string::String::from("The directory to mount the filesystem at.") };
-        ("help-arg-mnt-types", $($args:tt)*) => {
-            ::std::format!("Indicates the filesystem type (one of {types}).", $($args)*)
-        };
         ("help-flag-armor") => { ::std::string::String::from("Encrypt to a PEM encoded format.") };
         ("help-flag-decrypt") => { ::std::string::String::from("Decrypt the input.") };
         ("help-flag-encrypt") => { ::std::string::String::from("Encrypt the input (the default).") };
@@ -73,7 +62,6 @@ macro_rules! fl {
         ("info-decrypting", $($args:tt)*) => {
             ::std::format!("Decrypting {filename}", $($args)*)
         };
-        ("info-mounting-as-fuse") => { ::std::string::String::from("Mounting as FUSE filesystem") };
         ("input") => { ::std::string::String::from("INPUT") };
         ("keygen-help-flag-convert") => { ::std::string::String::from("Convert an identity file to a recipients file.") };
         ("keygen-help-flag-output") => { ::std::string::String::from("Write the result to the file at path OUTPUT. Defaults to standard output.") };
@@ -87,13 +75,6 @@ macro_rules! fl {
         ("man-keygen-example-stdout") => { ::std::string::String::from("Generate a new identity") };
         ("man-keygen-flag-convert") => { ::std::string::String::from("Read an identity file from INPUT or from standard input and output the\ncorresponding recipient(s), one per line, with no comments.") };
         ("man-keygen-flag-output") => { ::std::string::String::from("Write the identity to OUTPUT instead of standard output.\n\nIf OUTPUT already exists, it is not overwritten.") };
-        ("man-mount-about") => { ::std::string::String::from("Mount an age encrypted filesystem") };
-        ("man-mount-description") => { ::std::string::String::from("rage-mount decrypts the age encrypted filesystem at FILENAME on the\nfly, and mounts it as a directory on the local filesystem at MOUNTPOINT.\n\nPassphrase-encrypted files are detected automatically and the passphrase is\nrequested interactively. Otherwise, one or more IDENTITIES specified with\n-i/--identity are used to decrypt the file.\n\nThe previous contents (if any) and owner and mode of MOUNTPOINT become\ninvisible, and as long as this filesystem remains mounted, the pathname\nMOUNTPOINT refers to the root of the filesystem on FILENAME.") };
-        ("man-mount-example-identity") => { ::std::string::String::from("Mounting an archive encrypted to a recipient") };
-        ("man-mount-example-passphrase") => { ::std::string::String::from("Mounting an archive encrypted with a passphrase") };
-        ("man-mount-flag-types", $($args:tt)*) => {
-            ::std::format!("Set the filesystem type. The following types are currently supported: {types}.\n\nThis option is required. rage-mount does not attempt to guess the filesystem\nformat.\n\nIn theory, any efficiently-seekable filesystem format can be supported. At\npresent, rage-mount only supports seekable archive formats.", $($args)*)
-        };
         ("man-rage-about") => { ::std::string::String::from("A simple, secure, and modern encryption tool") };
         ("man-rage-description") => { ::std::string::String::from("rage encrypts or decrypts INPUT to OUTPUT. The INPUT argument is\noptional and defaults to standard input. Only a single INPUT file may be\nspecified. If -o/--output is not specified, OUTPUT defaults to standard\noutput.\n\nIf -p/--passphrase is specified, the file is encrypted with a passphrase\nrequested interactively. Otherwise, it's encrypted to one or more\nRECIPIENTS specified with -r/--recipient or\n-R/--recipients-file. Every recipient can decrypt the file.\n\nIn -d/--decrypt mode, passphrase-encrypted files are detected automatically\nand the passphrase is requested interactively. Otherwise, one or more\nIDENTITIES specified with -i/--identity are used to decrypt the file.\n\nage encrypted files are binary and not malleable, with around 200 bytes of\noverhead per recipient, plus 16 bytes every 64KiB of plaintext.") };
         ("man-rage-example-enc-github") => { ::std::string::String::from("Encrypt to the SSH keys of a GitHub user") };
@@ -129,9 +110,6 @@ macro_rules! fl {
         };
         ("man-rage-ssh-keys-heading") => { ::std::string::String::from("SSH keys") };
         ("man-see-also-heading") => { ::std::string::String::from("SEE ALSO") };
-        ("mnt-filename") => { ::std::string::String::from("FILENAME") };
-        ("mnt-mountpoint") => { ::std::string::String::from("MOUNTPOINT") };
-        ("mnt-types") => { ::std::string::String::from("TYPES") };
         ("output") => { ::std::string::String::from("OUTPUT") };
         ("plugin-name") => { ::std::string::String::from("PLUGIN-NAME") };
         ("prompt-passphrase") => { ::std::string::String::from("Passphrase") };

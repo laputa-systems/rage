@@ -8,8 +8,7 @@ explicit keys, no config options, and UNIX-style composability.
 This crate provides a set of Rust APIs that can be used to build more complex
 tools based on the age format. The primary consumers of these APIs are the
 [`rage`](https://crates.io/crates/rage) CLI tools, which provide straightforward
-encryption and decryption of files or streams (e.g. in shell scripts), as well
-as additional features such as mounting an encrypted archive.
+encryption and decryption of files or streams (e.g. in shell scripts).
 
 The format specification is at [age-encryption.org/v1](https://age-encryption.org/v1).
 The age format was designed by [@Benjojo](https://benjojo.co.uk/) and

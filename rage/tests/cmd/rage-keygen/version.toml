@@ -1,6 +1,6 @@
 bin.name = "rage-keygen"
 args = "--version"
 stdout = """
-rage-keygen 0.12.1
+rage-keygen 0.12.1 (git [SHA])
 """
 stderr = ""

@@ -92,19 +92,26 @@ jobs:
           key: ${{ matrix.runner }}-${{ matrix.target }}
       - name: Build macOS release
         if: matrix.docker_platform == ''
+        env:
+          RAGE_GIT_SHA: ${{ github.sha }}
         run: make release TARGET="${{ matrix.target }}"
       - name: Run macOS tests
         if: matrix.docker_platform == ''
+        env:
+          RAGE_GIT_SHA: ${{ github.sha }}
         run: make test-ci TARGET="${{ matrix.target }}"
       - name: Save macOS release
         if: matrix.docker_platform == ''
         run: cp "target/${{ matrix.target }}/dist/rage" "rage-${{ matrix.target }}"
       - name: Build and verify Linux releases
         if: matrix.docker_platform != ''
+        env:
+          RAGE_GIT_SHA: ${{ github.sha }}
         run: |
           docker run --rm --init \
             --platform "${{ matrix.docker_platform }}" \
             -e CI \
+            -e RAGE_GIT_SHA="$RAGE_GIT_SHA" \
             -v "$GITHUB_WORKSPACE:/rage" \
             -w /rage \
             rage-builder:${{ matrix.target }} \

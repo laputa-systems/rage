@@ -163,7 +163,6 @@ pub(crate) fn help() -> String {
         let label = option_label(&spec);
         result.push_str(&format!("    {label:label_width$}  {}\n", (spec.help)()));
     }
-    let keygen_name = keygen_name;
     let example_a = format!("$ {keygen_name} -o key.txt");
     let example_a_output = "age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p";
     let example_b = format!("$ tar cvz ~/data | {program} -r {example_a_output} > data.tar.gz.age");

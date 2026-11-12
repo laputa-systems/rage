@@ -141,7 +141,10 @@ fn keygen_examples() -> String {
     ])
 }
 
-fn render_examples(examples: Vec<(String, Vec<(String, Vec<String>)>)>) -> String {
+/// Example groups: a heading and its commands, each with its description lines.
+type Examples = Vec<(String, Vec<(String, Vec<String>)>)>;
+
+fn render_examples(examples: Examples) -> String {
     let mut output = format!(".SH {}\n", fl!("man-examples-heading"));
     for (heading, commands) in examples {
         output.push_str(&format!(".TP\n.B {}\n", roff(&heading)));

@@ -9,7 +9,7 @@ cargo = $(if $(findstring -linux-musl,$(TARGET)),,$(if $(filter release-static t
 .PHONY: build test check test-ci release verify-release install lint publish
 
 build:
-	$(call cargo,dev) build
+	$(call cargo,static) build
 
 test:
 	$(call cargo,test) test --quiet

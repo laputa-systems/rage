@@ -437,6 +437,7 @@ jobs:
             dist/rage-aarch64-apple-darwin/rage-aarch64-apple-darwin \
             dist/rage-aarch64-unknown-linux-musl/rage-aarch64-unknown-linux-musl-static \
             dist/rage-x86_64-unknown-linux-musl/rage-x86_64-unknown-linux-musl-static; do
+            chmod 0755 "$file"
             zip -9 --junk-paths "dist/zips/$(basename "$file").zip" "$file"
           done
           cd dist/zips

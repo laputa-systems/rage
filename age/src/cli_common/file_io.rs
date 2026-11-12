@@ -280,6 +280,7 @@ pub struct LazyFile {
     #[cfg(unix)]
     mode: u32,
     file: Option<io::Result<File>>,
+    protected_input: Option<same_file::Handle>,
 }
 
 impl LazyFile {
@@ -290,7 +291,7 @@ impl LazyFile {
             let mut options = OpenOptions::new();
             options.write(true);
             if self.allow_overwrite {
-                options.create(true).truncate(true);
+                options.create(true);
             } else {
                 // In addition to the check in `OutputWriter::new`, we enforce this at
                 // file opening time to avoid a race condition with the file being
@@ -301,14 +302,28 @@ impl LazyFile {
             #[cfg(unix)]
             options.mode(self.mode);
 
-            self.file = Some(options.open(filename));
+            self.file = Some((|| {
+                let file = options.open(filename)?;
+                if let Some(input) = &self.protected_input {
+                    if *input == same_file::Handle::from_file(file.try_clone()?)? {
+                        return Err(io::Error::new(
+                            io::ErrorKind::InvalidInput,
+                            "Input and output refer to the same file",
+                        ));
+                    }
+                }
+                if self.allow_overwrite && file.metadata()?.is_file() {
+                    file.set_len(0)?;
+                }
+                Ok(file)
+            })());
         }
 
         self.file
             .as_mut()
             .unwrap()
             .as_mut()
-            .map_err(|e| io::Error::new(e.kind(), format!("Failed to open file '{filename}'")))
+            .map_err(|e| io::Error::new(e.kind(), format!("Failed to open file '{filename}': {e}")))
     }
 }
 
@@ -386,6 +401,7 @@ impl OutputWriter {
                     #[cfg(unix)]
                     mode: _mode,
                     file: None,
+                    protected_input: None,
                 }));
             } else {
                 // User explicitly requested stdout; force the format to binary so that we
@@ -404,6 +420,20 @@ impl OutputWriter {
             is_tty,
             input_is_tty,
         )))
+    }
+
+    /// Rejects writes to the input file, including aliases created after construction.
+    ///
+    /// Call this before writing or flushing. File identity is checked on the opened
+    /// output handle before truncation. Standard input is not protected.
+    pub fn protect_input(&mut self, input: &InputReader) -> io::Result<()> {
+        if let (Self::File(output), InputReader::File(input)) = (self, input) {
+            if output.file.is_some() {
+                return Err(io::Error::new(io::ErrorKind::InvalidInput, "Output already opened"));
+            }
+            output.protected_input = Some(same_file::Handle::from_file(input.inner.try_clone()?)?);
+        }
+        Ok(())
     }
 
     /// Returns true if this output is to a terminal, and a user will likely see it.

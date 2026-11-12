@@ -37,8 +37,9 @@ fn set_up_io(
     let input = file_io::InputReader::new(input)?;
 
     // Create an output to the user-requested location.
-    let output =
+    let mut output =
         file_io::OutputWriter::new(output, true, output_format, 0o666, input.is_terminal())?;
+    output.protect_input(&input)?;
 
     Ok((input, output))
 }
@@ -205,6 +206,7 @@ fn write_output<R: io::Read, W: io::Write>(
     mut output: W,
 ) -> Result<(), error::DecryptError> {
     io::copy(&mut input, &mut output)?;
+    output.flush()?;
 
     Ok(())
 }
@@ -410,5 +412,27 @@ fn exit_keygen(result: Result<(), keygen::RunError>) -> ExitCode {
             ExitCode::from(2)
         }
         Err(keygen::RunError::Error(error)) => fail(error::Error::Keygen(error)),
+    }
+}
+
+#[cfg(test)]
+mod io_tests {
+    use super::*;
+
+    #[test]
+    fn final_flush_errors_are_returned() {
+        struct FailingFlush;
+        impl io::Write for FailingFlush {
+            fn write(&mut self, data: &[u8]) -> io::Result<usize> {
+                Ok(data.len())
+            }
+            fn flush(&mut self) -> io::Result<()> {
+                Err(io::Error::new(io::ErrorKind::StorageFull, "final flush failed"))
+            }
+        }
+        assert!(matches!(
+            write_output(&b"plaintext"[..], FailingFlush),
+            Err(error::DecryptError::Io(e)) if e.kind() == io::ErrorKind::StorageFull
+        ));
     }
 }

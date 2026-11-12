@@ -75,7 +75,7 @@ pub(super) fn parse_identity_files<Ctx, E: From<ReadError> + From<io::Error>>(
     ctx: &mut Ctx,
     #[cfg(feature = "armor")] encrypted_identity: impl Fn(
         &mut Ctx,
-        crate::encrypted::Identity<ArmoredReader<BufReader<InputReader>>, UiCallbacks>,
+        crate::encrypted::Identity<ArmoredReader<BufReader<PeekableReader<InputReader>>>, UiCallbacks>,
     ) -> Result<(), E>,
     #[cfg(feature = "ssh")] ssh_identity: impl Fn(&mut Ctx, &str, crate::ssh::Identity) -> Result<(), E>,
     identity_file: impl Fn(&mut Ctx, crate::IdentityFile<UiCallbacks>) -> Result<(), E>,
@@ -100,13 +100,9 @@ pub(super) fn parse_identity_files<Ctx, E: From<ReadError> + From<io::Error>>(
         )
         .is_ok()
         {
-            // Re-parse while taking ownership of the reader. This will always succeed
-            // because the age ciphertext header size is less than the underlying buffer
-            // size, but the manual reset here ensures this fails gracefully if for
-            // whatever reason the underlying buffer size changes unexpectedly.
             reader.reset()?;
             let identity = crate::encrypted::Identity::from_buffer(
-                ArmoredReader::new_buffered(reader.inner),
+                ArmoredReader::new_buffered(BufReader::new(reader)),
                 Some(filename.clone()),
                 UiCallbacks,
                 _max_work_factor,
@@ -159,9 +155,10 @@ enum PeekState {
     Reading,
 }
 
-struct PeekableReader<R: io::Read> {
+pub(super) struct PeekableReader<R: io::Read> {
     inner: BufReader<R>,
     state: PeekState,
+    replay: Vec<u8>,
 }
 
 impl<R: io::Read> PeekableReader<R> {
@@ -169,6 +166,7 @@ impl<R: io::Read> PeekableReader<R> {
         Self {
             inner: BufReader::with_capacity(PEEKABLE_SIZE, inner),
             state: PeekState::Peeking { consumed: 0 },
+            replay: Vec::new(),
         }
     }
 
@@ -209,27 +207,19 @@ impl<R: io::Read> io::BufRead for PeekableReader<R> {
     fn fill_buf(&mut self) -> io::Result<&[u8]> {
         match self.state {
             PeekState::Peeking { consumed } => {
-                let inner_len = self.inner.fill_buf()?.len();
-                if inner_len == 0 {
-                    // This state only occurs when the underlying data source is empty.
-                    // Don't fall through to change the state to `Reading`, because we can
-                    // always reset an empty stream.
-                    assert_eq!(consumed, 0);
-                    Ok(&[])
-                } else if consumed < inner_len {
-                    // Re-call so we aren't extending the lifetime of the mutable borrow
-                    // on `self.inner` to outside the conditional, which would prevent us
-                    // from performing other mutable operations on the other side.
-                    Ok(&self.inner.fill_buf()?[consumed..])
-                } else if inner_len < PEEKABLE_SIZE {
-                    assert_eq!(consumed, inner_len);
-                    Ok(&[])
-                } else {
-                    // We're done peeking.
-                    self.inner.consume(consumed);
-                    self.state = PeekState::Reading;
-                    self.inner.fill_buf()
+                if consumed < self.replay.len() {
+                    return Ok(&self.replay[consumed..]);
                 }
+                if self.replay.len() == PEEKABLE_SIZE {
+                    self.state = PeekState::Reading;
+                    self.replay.clear();
+                    return self.inner.fill_buf();
+                }
+                let available = self.inner.fill_buf()?;
+                let len = available.len().min(PEEKABLE_SIZE - self.replay.len());
+                self.replay.extend_from_slice(&available[..len]);
+                self.inner.consume(len);
+                Ok(&self.replay[consumed..])
             }
             PeekState::Reading => self.inner.fill_buf(),
         }
@@ -239,6 +229,57 @@ impl<R: io::Read> io::BufRead for PeekableReader<R> {
         match &mut self.state {
             PeekState::Peeking { consumed, .. } => *consumed += amt,
             PeekState::Reading => self.inner.consume(amt),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::{BufRead, Read};
+
+    struct Segmented<'a>(&'a [u8]);
+
+    impl Read for Segmented<'_> {
+        fn read(&mut self, output: &mut [u8]) -> io::Result<usize> {
+            let len = output.len().min(3);
+            self.0.read(&mut output[..len])
+        }
+    }
+
+    #[test]
+    fn short_reads_replay_until_the_peek_limit() {
+        let input = b"# comment\nAGE-SECRET-KEY-1EXAMPLE\n";
+        let mut reader = PeekableReader::new(Segmented(input));
+        let mut line = String::new();
+        reader.read_line(&mut line).unwrap();
+        assert_eq!(line, "# comment\n");
+        #[cfg(any(feature = "armor", feature = "ssh"))]
+        reader.reset().unwrap();
+        #[cfg(not(any(feature = "armor", feature = "ssh")))]
+        let mut reader = PeekableReader::new(Segmented(input));
+        let mut replayed = Vec::new();
+        reader.read_to_end(&mut replayed).unwrap();
+        assert_eq!(replayed, input);
+    }
+
+    #[cfg(any(feature = "armor", feature = "ssh"))]
+    #[test]
+    fn reset_is_bounded_by_the_replay_limit() {
+        for len in [0, PEEKABLE_SIZE - 1, PEEKABLE_SIZE, PEEKABLE_SIZE + 1] {
+            let input = vec![b'x'; len];
+            let mut reader = PeekableReader::new(Segmented(&input));
+            let mut output = Vec::new();
+            reader.read_to_end(&mut output).unwrap();
+            assert_eq!(output, input);
+            if len < PEEKABLE_SIZE {
+                reader.reset().unwrap();
+                output.clear();
+                reader.read_to_end(&mut output).unwrap();
+                assert_eq!(output, input);
+            } else {
+                assert_eq!(reader.reset().unwrap_err().kind(), io::ErrorKind::InvalidInput);
+            }
         }
     }
 }

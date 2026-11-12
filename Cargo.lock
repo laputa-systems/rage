@@ -79,6 +79,7 @@ dependencies = [
  "rpassword",
  "rsa",
  "rustybench",
+ "same-file",
  "scrypt",
  "sha2",
  "sha3",

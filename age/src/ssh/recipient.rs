@@ -39,7 +39,7 @@ use crate::{
 #[derive(Clone, Debug)]
 pub enum Recipient {
     /// An ssh-rsa public key.
-    SshRsa(Vec<u8>, rsa::RsaPublicKey),
+    SshRsa(Vec<u8>, rsa::PublicKey),
     /// An ssh-ed25519 public key.
     SshEd25519(Vec<u8>, EdwardsPoint),
 }
@@ -74,7 +74,7 @@ impl std::str::FromStr for Recipient {
 
     /// Parses an SSH recipient from a string.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match ssh_recipient(rsa::RsaPublicKey::MAX_SIZE)(s) {
+        match ssh_recipient(rsa::PublicKey::MAX_SIZE)(s) {
             Ok((_, ParsedRecipient::Supported(pk))) => Ok(pk),
             Ok((_, ParsedRecipient::RsaModulusTooLarge)) => {
                 Err(ParseRecipientKeyError::RsaModulusTooLarge)
@@ -121,7 +121,7 @@ impl TryFrom<Identity> for Recipient {
             Identity::Unencrypted(UnencryptedKey::SshRsa(ssh_key, _))
             | Identity::Unencrypted(UnencryptedKey::SshEd25519(ssh_key, _))
             | Identity::Encrypted(EncryptedKey { ssh_key, .. }) => {
-                match read_ssh::rsa_pubkey(rsa::RsaPublicKey::MAX_SIZE)(&ssh_key) {
+                match read_ssh::rsa_pubkey(rsa::PublicKey::MAX_SIZE)(&ssh_key) {
                     Ok((_, pk)) => {
                         if let Some(pk) = pk {
                             Ok(Recipient::SshRsa(ssh_key, pk))

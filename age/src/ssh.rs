@@ -343,12 +343,12 @@ mod read_ssh {
     /// Internal OpenSSH encoding of an RSA private key.
     ///
     /// - [OpenSSH serialization code](https://github.com/openssh/openssh-portable/blob/4103a3ec7c68493dbc4f0994a229507e943a86d3/sshkey.c#L3187-L3198)
-    fn openssh_rsa_privkey(input: &[u8]) -> IResult<&[u8], rsa::RsaPrivateKey> {
+    fn openssh_rsa_privkey(input: &[u8]) -> IResult<&[u8], rsa::PrivateKey> {
         delimited(
             string_tag(SSH_RSA_KEY_PREFIX),
             map_res(
                 (mpint, mpint, mpint, mpint, mpint, mpint),
-                |(n, e, d, _iqmp, p, q)| rsa::RsaPrivateKey::from_components(n, e, d, vec![p, q]),
+                |(n, e, d, _iqmp, p, q)| rsa::PrivateKey::from_components(n, e, d, vec![p, q]),
             ),
             comment_and_padding,
         )
@@ -503,12 +503,12 @@ mod read_ssh {
     /// Returns `None` if the modulus is larger than `max_size`.
     pub(super) fn rsa_pubkey(
         max_size: usize,
-    ) -> impl Fn(&[u8]) -> IResult<&[u8], Option<rsa::RsaPublicKey>> {
+    ) -> impl Fn(&[u8]) -> IResult<&[u8], Option<rsa::PublicKey>> {
         move |input| {
             preceded(
                 string_tag(SSH_RSA_KEY_PREFIX),
                 map_res((mpint, mpint), |(exponent, modulus)| {
-                    match rsa::RsaPublicKey::new_with_max_size(modulus, exponent, max_size) {
+                    match rsa::PublicKey::new_with_size_limits(modulus, exponent, rsa::PublicKey::MIN_SIZE..=max_size) {
                         Err(rsa::Error::ModulusTooLarge) => Ok(None),
                         res => res.map(Some),
                     }
@@ -579,7 +579,7 @@ mod write_ssh {
     /// ```
     pub(super) fn rsa_pubkey<W: Write>(
         w: &mut W,
-        pubkey: &rsa::RsaPublicKey,
+        pubkey: &rsa::PublicKey,
     ) -> io::Result<()> {
         string(w, SSH_RSA_KEY_PREFIX.as_bytes())?;
         mpint(w, pubkey.e())?;

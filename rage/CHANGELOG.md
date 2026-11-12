@@ -12,6 +12,10 @@ to 1.0.0 are beta releases.
 
 ## [Unreleased]
 
+### Removed
+- Windows is no longer a supported target; releases are built for Linux and
+  macOS only.
+
 ### Changed
 - MSRV is now 1.85.0.
 - MSRV for `rage-mount` (behind the `mount` feature flag) is now 1.88.0.

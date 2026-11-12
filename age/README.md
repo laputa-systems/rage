@@ -44,6 +44,7 @@ The [docs.rs reference](https://docs.rs/age) describes the upstream package.
 - `async` enables asynchronous APIs for encryption and decryption.
 
 - `cli-common` enables common helper functions for building age CLI tools.
+  Unix-only.
 
 - `plugin` enables external age-plugin support.
 

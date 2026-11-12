@@ -10,6 +10,9 @@ to 1.0.0 are beta releases.
 
 ## [Unreleased]
 
+### Removed
+- Windows is no longer a supported target. `cli-common` is Unix-only.
+
 ### Changed
 - MSRV is now 1.85.0.
 - Migrated to `chacha20poly1305 0.11`, `curve25519-dalek 5`, `hmac 0.13`,

@@ -121,7 +121,6 @@ fn decryption_reports_final_stdout_flush_failure() {
     assert!(!result.stderr.is_empty());
 }
 
-#[cfg(unix)]
 #[test]
 fn output_aliases_created_after_setup_are_rejected() {
     use age::cli_common::file_io::{InputReader, OutputFormat, OutputWriter};

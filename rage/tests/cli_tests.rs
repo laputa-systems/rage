@@ -6,6 +6,5 @@ fn cli_tests() {
     tests.case("tests/cmd/rage/*.toml");
     tests.case("tests/cmd/rage-keygen/*.toml");
 
-    #[cfg(unix)]
     tests.case("tests/unix/*/*.toml");
 }

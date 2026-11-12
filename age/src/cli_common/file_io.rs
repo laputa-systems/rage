@@ -5,7 +5,6 @@ use std::fs::{File, OpenOptions};
 use std::io::{self, Read, Write};
 use std::path::Path;
 
-#[cfg(unix)]
 use std::os::unix::fs::OpenOptionsExt;
 
 use is_terminal::IsTerminal;
@@ -277,7 +276,6 @@ impl Write for StdoutWriter {
 pub struct LazyFile {
     filename: String,
     allow_overwrite: bool,
-    #[cfg(unix)]
     mode: u32,
     file: Option<io::Result<File>>,
     protected_input: Option<same_file::Handle>,
@@ -299,7 +297,6 @@ impl LazyFile {
                 options.create_new(true);
             }
 
-            #[cfg(unix)]
             options.mode(self.mode);
 
             self.file = Some((|| {
@@ -358,7 +355,7 @@ impl OutputWriter {
         output: Option<String>,
         allow_overwrite: bool,
         mut format: OutputFormat,
-        _mode: u32,
+        mode: u32,
         input_is_tty: bool,
     ) -> io::Result<Self> {
         let is_tty = console::user_attended();
@@ -398,8 +395,7 @@ impl OutputWriter {
                 return Ok(OutputWriter::File(LazyFile {
                     filename,
                     allow_overwrite,
-                    #[cfg(unix)]
-                    mode: _mode,
+                    mode,
                     file: None,
                     protected_input: None,
                 }));
@@ -463,12 +459,9 @@ impl Write for OutputWriter {
 
 #[cfg(test)]
 pub(crate) mod tests {
-    #[cfg(unix)]
     use super::{OutputFormat, OutputWriter};
-    #[cfg(unix)]
     use std::io::Write;
 
-    #[cfg(unix)]
     #[test]
     fn lazy_existing_file_allow_overwrite() {
         OutputWriter::new(
@@ -483,7 +476,6 @@ pub(crate) mod tests {
         .unwrap();
     }
 
-    #[cfg(unix)]
     #[test]
     fn lazy_existing_file_forbid_overwrite() {
         use std::io;

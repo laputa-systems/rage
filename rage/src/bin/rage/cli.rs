@@ -226,7 +226,6 @@ mod tests {
         assert!(parse(&["--encrypt", "--encrypt"]).unwrap_err().to_string().contains("encrypt"));
     }
 
-    #[cfg(unix)]
     #[test]
     fn rejects_non_utf8_values_at_string_consumers() {
         use std::os::unix::ffi::OsStringExt;

@@ -2,9 +2,9 @@
 
 This crate contains common structs and functions used across the `age` crates.
 
-You are probably looking for the [`age`](https://crates.io/crates/age) crate
-itself. You should only need to directly depend on this crate if you are
-implementing a custom recipient type.
+You are probably looking for this workspace's [`age` crate](../age/README.md).
+Depend on `age-core` directly when implementing a custom recipient type. This fork publishes `age-core` through
+`mycrates`, configured in [`.cargo/config.toml`](../.cargo/config.toml).
 
 ## License
 

@@ -19,13 +19,22 @@ The reference interoperable Go implementation is available at
 
 ## Usage
 
-Add this line to your `Cargo.toml`:
+This checkout contains the Laputa fork of `age`. To use it from a sibling
+application checkout, add a path dependency:
 
-```
-age = "0.11"
+```toml
+[dependencies]
+age = { path = "../rage/age" }
 ```
 
-See the [documentation](https://docs.rs/age) for examples.
+Copy the `mycrates` registry definition from the repository's
+[Cargo configuration](../.cargo/config.toml) into your application's Cargo
+configuration. The workspace's `age-core` dependency names that registry.
+A version-only `age` dependency selects the upstream crates.io package.
+
+See the [public API examples](src/lib.rs), or generate this checkout's API
+reference with `cargo doc -p age --all-features --no-deps`.
+The [docs.rs reference](https://docs.rs/age) describes the upstream package.
 
 ### Feature flags
 
@@ -35,6 +44,8 @@ See the [documentation](https://docs.rs/age) for examples.
 - `async` enables asynchronous APIs for encryption and decryption.
 
 - `cli-common` enables common helper functions for building age CLI tools.
+
+- `plugin` enables external age-plugin support.
 
 - `ssh` enables the `age::ssh` module, which allows for reusing existing SSH key
   files for age encryption.

@@ -134,7 +134,7 @@
 //!
 //!     let mut decrypted = vec![];
 //!     let mut reader = decryptor.decrypt(iter::once(&key as &dyn age::Identity))?;
-//!     reader.read_to_end(&mut decrypted);
+//!     reader.read_to_end(&mut decrypted)?;
 //!
 //!     decrypted
 //! };
@@ -185,7 +185,7 @@
 //!
 //!     let mut decrypted = vec![];
 //!     let mut reader = decryptor.decrypt(iter::once(&age::scrypt::Identity::new(passphrase) as _))?;
-//!     reader.read_to_end(&mut decrypted);
+//!     reader.read_to_end(&mut decrypted)?;
 //!
 //!     decrypted
 //! };

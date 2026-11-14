@@ -561,7 +561,7 @@ mod write_ssh {
         //     zero MUST be stored as a string with zero bytes of data.
         if value.is_zero().into() {
             // BoxedUint represents zero as vec![0]
-            bytes = vec![];
+            bytes.clear();
         } else if bytes[0] >> 7 != 0 {
             bytes.insert(0, 0);
         }

@@ -19,11 +19,23 @@ for spec in \
   chmod 0644 "$fixture/dist/$artifact/$binary"
 done
 (cd "$fixture" && bash -eu package.sh)
-for archive in "$fixture"/dist/zips/*.zip; do
-  destination="$fixture/extracted/$(basename "$archive" .zip)"
+for archive in "$fixture"/dist/archives/*.tar.xz; do
+  destination="$fixture/extracted/$(basename "$archive" .tar.xz)"
   mkdir -p "$destination"
-  unzip -q "$archive" -d "$destination"
-  binary=$(basename "$archive" .zip)
+  binary=$(basename "$archive" .tar.xz)
+  python3 - "$archive" "$binary" <<'PY'
+import sys
+import tarfile
+
+with tarfile.open(sys.argv[1], "r:xz") as archive:
+    members = archive.getmembers()
+    assert len(members) == 1
+    member = members[0]
+    assert member.name == sys.argv[2]
+    assert member.isfile() and member.mode == 0o755
+    assert (member.uid, member.gid, member.mtime) == (0, 0, 0)
+PY
+  tar -xJf "$archive" -C "$destination"
   test -x "$destination/$binary"
   cmp "$destination/$binary" "$fixture/dist/${binary%-static}/$binary"
   "$destination/$binary"

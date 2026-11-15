@@ -31,9 +31,9 @@ The release workflow builds these targets:
 
 | Platform | Archive |
 | --- | --- |
-| macOS, Apple silicon | `rage-aarch64-apple-darwin.zip` |
-| Linux, x86-64 with static musl | `rage-x86_64-unknown-linux-musl-static.zip` |
-| Linux, arm64 with static musl | `rage-aarch64-unknown-linux-musl-static.zip` |
+| macOS, Apple silicon | `rage-aarch64-apple-darwin.tar.xz` |
+| Linux, x86-64 with static musl | `rage-x86_64-unknown-linux-musl-static.tar.xz` |
+| Linux, arm64 with static musl | `rage-aarch64-unknown-linux-musl-static.tar.xz` |
 
 Verify the archive against `SHA256SUMS`, unpack it, and install its executable
 as `rage` with mode `0755`. The archive contains one executable. `rage keygen`

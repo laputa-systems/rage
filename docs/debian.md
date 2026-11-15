@@ -39,8 +39,8 @@ sh tools/test_publish_age_core.sh
 ## Build release binaries
 
 [`Makefile`](../Makefile) owns `release`, `verify-release`, `test-ci`, and `install`.
-On Linux, use the builder defined by [`Dockerfile`](../Dockerfile), which supplies
-musl, LLVM, Rust source, and the `musl-cargo` wrapper. The release workflow in
+On Linux, build inside the llvm musl toolchain image pinned by `MUSL_IMAGE` in the
+release workflow; it supplies musl, LLVM, Rust source, and the `musl-cargo` wrapper. The release workflow in
 [`.github/workflows/release.yml`](../.github/workflows/release.yml) contains the
 native target commands for Linux x86-64, Linux arm64, and macOS arm64.
 

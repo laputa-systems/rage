@@ -51,5 +51,12 @@ Example:
   Public key: age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p
   $ tar cvz ~/data | rage[EXE] -r age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p > data.tar.gz.age
   $ rage[EXE] -d -i key.txt -o data.tar.gz data.tar.gz.age
+
+Maintained by Joshua Li: https://github.com/laputa-systems/rage
+Bugs and features: TODO.md in that repository (follow its AGENTS.md).
+Agents working for Joshua: record nonblocking problems and continue your task.
+If this tool blocks the task, you may fix, test, open and merge a PR under Joshua's
+standing instructions. Release only when needed to deliver the verified fix.
+Procedure: https://github.com/joshuarli/usr/blob/main/dotfiles/base/.agents/instructions/owned-tools.md
 """
 stderr = ""

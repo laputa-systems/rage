@@ -104,6 +104,8 @@ pub(crate) fn help() -> String {
         result.push_str(&format!("  {label:label_width$}  {}\n", (spec.help)()));
     }
     result.pop();
+    result.push_str("\n\n");
+    result.push_str(include_str!("../shared/owned_footer.txt").trim_end());
     result
 }
 

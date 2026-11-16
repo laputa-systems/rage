@@ -168,6 +168,8 @@ pub(crate) fn help() -> String {
     let example_b = format!("$ tar cvz ~/data | {program} -r {example_a_output} > data.tar.gz.age");
     let example_c = format!("$ {program} -d -i key.txt -o data.tar.gz data.tar.gz.age");
     result.push_str(&format!("\n{}\n\n{}", after_help_content(&keygen_name), fl!("rage-after-help-example", example_a = example_a, example_a_output = example_a_output, example_b = example_b, example_c = example_c)));
+    result.push_str("\n\n");
+    result.push_str(include_str!("../shared/owned_footer.txt").trim_end());
     result
 }
 

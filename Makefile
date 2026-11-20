@@ -6,7 +6,7 @@ TARGET_ENV := $(shell printf '%s' "$(TARGET)" | tr '[:lower:]-' '[:upper:]_')
 CARGO_CMD  := $(if $(findstring -linux-musl,$(TARGET)),$(shell command -v musl-cargo 2>/dev/null || printf cargo),cargo)
 cargo = $(if $(findstring -linux-musl,$(TARGET)),,$(if $(filter release-static test,$(1)),CARGO_TARGET_$(TARGET_ENV)_LINKER=clang ,)$(if $(filter release-static,$(1)),RUSTFLAGS="-Cpanic=abort")) MUSL_TARGET="$(TARGET)" MUSL_BUILD_MODE="$(1)" $(CARGO_CMD)
 
-.PHONY: build test check test-ci release verify-release install lint publish
+.PHONY: build test check test-ci release verify-release install lint publish bench bench-check bench-list
 
 build:
 	$(call cargo,static) build
@@ -48,6 +48,16 @@ lint:
 
 publish:
 	./tools/publish_age_core.sh
+
+# Benchmarks (see tools/bench.sh): BENCH_ARGS="--tier change", "--tier full" only when asked.
+bench:
+	./tools/bench.sh $(BENCH_ARGS)
+
+bench-check:
+	./tools/bench.sh --check $(BENCH_ARGS)
+
+bench-list:
+	./tools/bench.sh --list $(BENCH_ARGS)
 
 install: release
 	@set -eu; \

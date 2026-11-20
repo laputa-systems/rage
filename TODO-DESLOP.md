@@ -1,5 +1,5 @@
 Prefix: DSLP
-Next: 10
+Next: 12
 
 Deslop campaign backlog ([plan](https://github.com/laputa-systems/stuff/blob/main/docs/campaigns/deslop.md), tier E). One agent works this file with the `deslop` skill: take the lowest-numbered open ticket whose area does not start with `Needs owner ·`. After DSLP-5, work the open P1 and P2 findings, then fill in `## Report` below.
 
@@ -8,15 +8,6 @@ Deslop campaign backlog ([plan](https://github.com/laputa-systems/stuff/blob/mai
 Not started.
 
 ## Tickets
-
-### DSLP-6 · P2 · Bench: audit benchmark coverage and entrypoint
-
-- **Area:** deslop · bench
-- **Where:** age/benches/, Makefile
-- **Problem:** The fork benchmarks parser and throughput but their outcome coverage and selective entrypoint have not been audited.
-- **Recommendation:** Run the deslop Bench step and record ranked gaps and the selective entrypoint evidence.
-- **Fix with:** deslop
-- **Effort:** M
 
 ### DSLP-7 · P3 · Report sub-1024-bit RSA recipients as weak keys
 
@@ -35,6 +26,24 @@ Not started.
 - **Recommendation:** Run the script in the ubuntu CI job (or a dedicated step) once jaq is available there, and state the GNU tar requirement in its header.
 - **Fix with:** deslop
 - **Effort:** S
+
+### DSLP-10 · P3 · No benchmark covers a rage user journey, passphrase, SSH or armor paths
+
+- **Area:** deslop · bench
+- **Where:** age/benches/, rage/
+- **Problem:** The two harnesses time x25519 header parsing (empty payload, 1-9 recipients) and x25519 encrypt/decrypt of constant bytes through the library. Nothing times the rage binary end to end (startup, file to file, stdin to stdout), scrypt passphrase decryption (work-factor bound), ssh-rsa/ssh-ed25519 recipients and identities, armor, the async reader, or a plugin round trip. A regression in any of these, including the I/O paths this fork rewrote (output identity check, identity replay), passes unnoticed.
+- **Recommendation:** Add a Change-tier workload per outcome, starting with rage encrypt and decrypt of a 1 MiB file through the built binary, and a passphrase decrypt at the default work factor.
+- **Fix with:** bench-pyramid
+- **Effort:** M
+
+### DSLP-11 · P3 · Benchmark results have no budget, baseline or allocation attribution
+
+- **Area:** deslop · bench
+- **Where:** age/benches/, tools/bench.sh
+- **Problem:** Runs print timings and exit 0 whatever they measure, so a slowdown fails nothing. No baseline file is kept, although rustybench can write and check one (baseline, diff, check), and nothing records allocations or peak memory for the stream paths. Each result is also not stamped with the commit or host load, so a busy-host number cannot be told from a quiet one afterwards.
+- **Recommendation:** Keep a host-keyed baseline for the Change tier and report paired ratios with rustybench diff; add allocation counters to the throughput workloads. Gate nothing until a quiet-host spread is measured.
+- **Fix with:** bench-pyramid
+- **Effort:** M
 
 ### DSLP-9 · P4 · Drop the unused optional num-traits dependency of age
 

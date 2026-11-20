@@ -9,15 +9,6 @@ Not started.
 
 ## Tickets
 
-### DSLP-1 · P2 · Ground: baseline, boundaries, and CI test entry point
-
-- **Area:** deslop · ground
-- **Where:** AGENTS.md, Makefile, .github/workflows/
-- **Problem:** Base 289c319; code lines Rust 12.4k (fleet/loc/v1, vendored included); timings not yet measured. Fork of str4d/rage (main); work only our changes against the upstream merge base (+1.9k/-2.5k); upstream code stays untouched. Open fleet lint findings: owned-tool-support 2, audit-registry 1, audit-vuln 1, binary-release-static 1, make-clean-target 1. Consumers in the fleet: vault; their tests are the consumer check for API changes. Perf gate: decide in Ground whether a user-visible hot path needs a workload.
-- **Recommendation:** Run the deslop Ground step. Accept: CI runs make test and is green, and AGENTS.md has a Verification section.
-- **Fix with:** deslop
-- **Effort:** S
-
 ### DSLP-2 · P2 · Diagnose: ultrareview into this backlog
 
 - **Area:** deslop · diagnose

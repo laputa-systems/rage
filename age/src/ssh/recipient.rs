@@ -296,6 +296,22 @@ pub(crate) mod tests {
     }
 
     #[test]
+    fn ssh_rsa_below_2048_bits_is_weak() {
+        let weak = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDc2LmaCnPIsJcWqo+jxNXNZWZSU6ewvaf6TKKqDh82TdUEIHxglLH7M6TUVWK66UJnOJzD9UoZJgJGe7T52EYULVOQ8Ayn2f1d+neJ9bzBGn0OqzmsFtX2YIHj0iHy2BVrh4Bu+V28ZG/z8GjhAWhiWKGFN3GrJqBs1x3hQX5NaQ== weak@rust";
+        assert_eq!(
+            weak.parse::<Recipient>().unwrap_err(),
+            ParseRecipientKeyError::RsaModulusTooSmall,
+        );
+    }
+
+    #[test]
+    fn ssh_rsa_below_the_library_minimum_is_rejected() {
+        // 768 bits. DSLP-7 tracks which error variant this should report.
+        let tiny = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAYQDwDBuWvB3PjDD9QBXiafQBALC6kWFoS1S0597ZDpqShyDW+3ho0eX2UwWR9Qu+SlZBZ52qpUl2fgwi/tDturcjGsfF+OgUX7ssUZnSbIquhOE9lO8crTj1vjgp7KdzRys=";
+        assert!(tiny.parse::<Recipient>().is_err());
+    }
+
+    #[test]
     fn ssh_ed25519_encoding() {
         let pk: Recipient = TEST_SSH_ED25519_PK.parse().unwrap();
         assert_eq!(pk.to_string() + " alice@rust", TEST_SSH_ED25519_PK);

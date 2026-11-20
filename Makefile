@@ -12,6 +12,7 @@ build:
 	$(call cargo,static) build
 
 test:
+	$(call cargo,test) build --quiet -p age-plugin --example age-plugin-unencrypted
 	$(call cargo,test) test --quiet
 
 check:

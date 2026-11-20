@@ -306,7 +306,7 @@ pub(crate) mod tests {
 
     #[test]
     fn ssh_rsa_below_the_library_minimum_is_rejected() {
-        // 768 bits. DSLP-7 tracks which error variant this should report.
+        // 768 bits. RAGE-6 tracks which error variant this should report.
         let tiny = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAYQDwDBuWvB3PjDD9QBXiafQBALC6kWFoS1S0597ZDpqShyDW+3ho0eX2UwWR9Qu+SlZBZ52qpUl2fgwi/tDturcjGsfF+OgUX7ssUZnSbIquhOE9lO8crTj1vjgp7KdzRys=";
         assert!(tiny.parse::<Recipient>().is_err());
     }

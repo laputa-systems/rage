@@ -319,7 +319,7 @@ fn decrypt(opts: AgeOptions) -> Result<(), error::DecryptError> {
     }
 }
 
-pub fn run<I, T>(args: I) -> ExitCode
+pub(crate) fn run<I, T>(args: I) -> ExitCode
 where
     I: IntoIterator<Item = T>,
     T: Into<OsString>,

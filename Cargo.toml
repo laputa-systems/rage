@@ -27,9 +27,6 @@ chacha20poly1305 = { version = "0.11", default-features = false, features = [
     "alloc",
 ] }
 
-# - SHA3-256 from FIPS 202
-sha3 = "0.12"
-
 # - ML-KEM from FIPS 203
 ml-kem = "0.3"
 

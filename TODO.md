@@ -1,63 +1,65 @@
 Prefix: RAGE
-Next: 6
+Next: 12
 
 # Resolved work
 
-Priorities are assumed from impact and likelihood. The observations below were
-reproduced against `33c3e18889d60cdbfe468b26b7871cd5d76b81e9` with disposable
-fixtures. All five findings below are fixed; the original observations are retained for context.
+RAGE-1 through RAGE-5 were fixed by `c064fc4` and closed after each fix was found
+guarded and its guard was proven against a hand-injected fault (see the commit that
+closed them): hard-link and alias rejection and the lazy-output policy in
+`rage/tests/io_regressions.rs`; the final-flush error in
+`rage/src/bin/rage/app.rs` (`io_tests`); identity short-read replay in
+`age/src/cli_common/identities.rs` tests and `io_regressions.rs`; release archive
+modes and musl build modes in `tools/test_delivery.sh`.
+### RAGE-6 · P3 · Report sub-1024-bit RSA recipients as weak keys
 
-### RAGE-1 · P1 · Hard-linked input and output can destroy the source while reporting success
+- **Area:** ssh · errors
+- **Where:** age/src/ssh.rs:511; age/src/ssh/recipient.rs:224
+- **Problem:** The upgraded RSA parser rejects moduli below 1024 bits before the existing 2048-bit weak-key classification. A generated 768-bit SSH RSA recipient makes the built rage binary report unsupported ssh-rsa instead of the specific weak-key error; the public ParseRecipientKeyError contract also distinguishes RsaModulusTooSmall.
+- **Recommendation:** Preserve rejection while classifying sub-1024-bit RSA recipients as weak, with a regression covering both sides of the RSA library minimum.
+- **Fix with:** error-model
+- **Effort:** S
 
-- **Status:** Fixed. The lazy output retains the opened input identity and compares it with the opened output before truncation. CLI tests verify hard links during encryption and decryption and aliases introduced after setup, including symlinks.
+### RAGE-7 · P3 · Delivery regression script is outside make test and CI, and needs GNU tar
 
-- **Area:** Data
-- **Where:** `rage/src/bin/rage/app.rs:377`, `age/src/cli_common/file_io.rs:286`, `age/src/cli_common/file_io.rs:293`
-- **Problem:** The same-file guard compares canonical path strings. Two hard links have different canonical paths but refer to the same file. The lazy output then opens that file with truncation while it is also the input. In a local fixture, encrypting a 40-byte input to its hard-linked alias exited 0, replaced the original contents, and produced ciphertext that decrypted to an age header instead of those 40 bytes. Reproduce with a generated test identity, a small `input`, `ln input output`, and `rage -r RECIPIENT -o output input`, then compare the decrypted result with a saved copy. The source is already lost when the successful exit is reported.
-- **Recommendation:** Establish input/output file identity before any truncating write, using open handles and platform file identity rather than path spelling. Reject identical files, including hard links and symlinks, while preserving the lazy-output behavior on earlier failures. Add a disposable-file regression that checks rejection and verifies both aliases still contain the original bytes.
-- **Fix with:** `os-boundaries`
-- **Effort:** M (days)
+- **Area:** tests
+- **Where:** tools/test_delivery.sh; .github/workflows/ci.yml
+- **Problem:** RAGE-4 (release archive modes) and RAGE-5 (musl build modes) are guarded only by tools/test_delivery.sh. Neither make test nor ci.yml runs it, and it needs GNU tar (--sort, --mtime), jaq and rg, so on macOS (bsdtar) it exits 1 at the package step. On this host the mode and musl-mode assertions were reproduced only through a bsdtar shim and by running the Makefile half directly.
+- **Recommendation:** Run the script in the ubuntu CI job (or a dedicated step) once jaq is available there, and state the GNU tar requirement in its header.
+- **Fix with:** deslop
+- **Effort:** S
 
-### RAGE-2 · P1 · Decryption returns success without finalizing its output
+### RAGE-8 · P3 · No benchmark covers a rage user journey, passphrase, SSH or armor paths
 
-- **Status:** Fixed. Decryption explicitly flushes after a successful copy. Regression tests cover empty new and existing destinations, lazy failure behavior, and a failing final flush; a Linux-only test covers `/dev/full`.
+- **Area:** bench
+- **Where:** age/benches/, rage/
+- **Problem:** The two harnesses time x25519 header parsing (empty payload, 1-9 recipients) and x25519 encrypt/decrypt of constant bytes through the library. Nothing times the rage binary end to end (startup, file to file, stdin to stdout), scrypt passphrase decryption (work-factor bound), ssh-rsa/ssh-ed25519 recipients and identities, armor, the async reader, or a plugin round trip. A regression in any of these, including the I/O paths this fork rewrote (output identity check, identity replay), passes unnoticed.
+- **Recommendation:** Add a Change-tier workload per outcome, starting with rage encrypt and decrypt of a 1 MiB file through the built binary, and a passphrase decrypt at the default work factor.
+- **Fix with:** bench-pyramid
+- **Effort:** M
 
-- **Area:** Errors
-- **Where:** `rage/src/bin/rage/app.rs:203`, `age/src/cli_common/file_io.rs:144`, `age/src/cli_common/file_io.rs:158`, `age/src/cli_common/file_io.rs:274`
-- **Problem:** `write_output` returns after `io::copy` without flushing its writer. `LazyFile` opens only on write or flush, so decrypting an empty file with `-o new-file` exits 0 without creating it; an existing destination keeps its old bytes. Separately, a final stdout flush happens in `StdoutBuffer::drop`, which discards errors. On Linux, decrypting a valid ten-byte plaintext with no newline to stdout redirected to `/dev/full` exited 0 with empty stderr. All three cases were reproduced with a newly generated test identity and valid ciphertext.
-- **Recommendation:** Explicitly finalize the output after a successful copy and propagate any flush error before returning success. Ensure successful empty output creates or truncates its destination, while failed operations retain the existing lazy-opening policy. Cover a new empty output, an existing sentinel output, and a writer whose final flush fails.
-- **Fix with:** `error-model`
-- **Effort:** S (hours)
+### RAGE-9 · P3 · Benchmark results have no budget, baseline or allocation attribution
 
-### RAGE-3 · P2 · Identity input treats an initial short read as end of file
+- **Area:** bench
+- **Where:** age/benches/, tools/bench.sh
+- **Problem:** Runs print timings and exit 0 whatever they measure, so a slowdown fails nothing. No baseline file is kept, although rustybench can write and check one (baseline, diff, check), and nothing records allocations or peak memory for the stream paths. Each result is also not stamped with the commit or host load, so a busy-host number cannot be told from a quiet one afterwards.
+- **Recommendation:** Keep a host-keyed baseline for the Change tier and report paired ratios with rustybench diff; add allocation counters to the throughput workloads. Gate nothing until a quiet-host spread is measured.
+- **Fix with:** bench-pyramid
+- **Effort:** M
 
-- **Status:** Fixed. Format detection now accumulates short reads into a bounded replay buffer. Segmented-reader tests cover replay and its size limit, and a CLI pipe test sends the comment separately from the identity.
+### RAGE-10 · P3 · The plugin round trip test is unverified under make test-ci and the musl release lane
 
-- **Area:** Errors
-- **Where:** `age/src/cli_common/identities.rs:155`, `age/src/cli_common/identities.rs:209`, `age/src/cli_common/identities.rs:224`
-- **Problem:** While peeking, consuming a buffer shorter than `PEEKABLE_SIZE` makes `fill_buf` return an empty slice without asking the underlying reader for more bytes. A short pipe read is not EOF. In a local subprocess, `rage -d -i - input.age` received only a comment line in its first stdin write and exited 1 with "Missing identities" while the producer still held stdin open, before it could send the valid identity. This also affects identities supplied by other readers that return partial buffers.
-- **Recommendation:** Keep a bounded replay buffer for format detection and track actual EOF separately from a short read. Preserve the current encrypted-identity, SSH, then line-oriented identity parsing order and reset contract. Exercise a segmented reader and a pipe whose writer remains open between a comment and a valid identity; the complete input must be consumed without assuming reads fill the buffer.
-- **Fix with:** `make-invalid-states-unrepresentable`
-- **Effort:** M (days)
+- **Area:** tests
+- **Where:** Makefile test-ci; rage/tests/plugin_roundtrip.rs; .github/workflows/release.yml:90,109
+- **Problem:** rage/tests/plugin_roundtrip.rs needs the age-plugin-unencrypted example beside the rage test binary. make test builds it, and make test-ci now builds the release example, but test-ci needs a built dist binary and the musl docker lane, neither of which could run here, so where the example lands for a --target or musl-cargo build is unverified.
+- **Recommendation:** Run make test-ci in the next release workflow dispatch and, if the example path differs, resolve it from CARGO_BIN_EXE_rage's profile directory or build it from the test with cargo.
+- **Fix with:** deslop
+- **Effort:** S
 
-### RAGE-4 · P2 · Release archives contain nonexecutable binaries
+### RAGE-11 · P4 · Drop the unused optional num-traits dependency of age
 
-- **Status:** Fixed. Validated release executables are set to mode `0755` before ZIP creation. `bash tools/test_delivery.sh` packages fixtures initially at `0644`, checks checksums and extracted bytes, and executes each extracted fixture.
-
-- **Area:** Build
-- **Where:** `.github/workflows/release.yml:124`, `.github/workflows/release.yml:161`, `.github/workflows/release.yml:440`
-- **Problem:** Build jobs upload bare executables with the artifact action's default archive mode. The pinned [upload action](https://github.com/actions/upload-artifact/blob/cf430e030ddbb5b0abf93d22962f4752f3646cd9/README.md#permission-loss) and [download action](https://github.com/actions/download-artifact/blob/9000827ccba6bdab643e8b6fd33ac0654aef8333/README.md#maintaining-file-permissions) document that this transfer produces files with mode `0644`. The release job zips those files without restoring executability. Running the actual packaging block against the three expected artifact filenames at mode `0644` exited 0 and passed its checksum checks, while every final ZIP entry retained mode `0100644`. This proof exercises the packaging code and pinned transfer contract, not a hosted release run.
-- **Recommendation:** Restore mode `0755` on the validated executable files before creating the release ZIPs, or create the final archives before artifact transfer. Verify the mode of an extracted archive in the local packaging check as well as its bytes and checksum.
-- **Fix with:** `os-boundaries`
-- **Effort:** S (hours)
-
-### RAGE-5 · P2 · The development build requests a mode the musl wrapper rejects
-
-- **Status:** Fixed. `make build` selects the wrapper’s existing `static` mode. `bash tools/test_delivery.sh` exercises the actual Makefile and extracted wrapper, checking Cargo arguments and flags for development, test, and release modes.
-
-- **Area:** Build
-- **Where:** `Makefile:6`, `Makefile:12`, `Dockerfile:109`, `Dockerfile:117`
-- **Problem:** `make build` selects `musl-cargo` when it is present and passes `MUSL_BUILD_MODE=dev`. The wrapper installed by this repository's Dockerfile accepts only `static`, `test`, `driver`, and `release-static`. Running the real Makefile with that exact extracted wrapper and harmless toolchain stubs exited 2 with `musl-cargo: unknown build mode: dev`; Cargo was never called. The normal development target is therefore unusable in the repository's own Linux builder.
-- **Recommendation:** Give the Makefile and wrapper one compatible mode vocabulary: implement `dev` with the intended development flags, or select the existing equivalent mode. Verify that the development invocation reaches Cargo with the intended flags as well as preserving release and test modes.
-- **Fix with:** `single-source-of-truth`
-- **Effort:** S (hours)
+- **Area:** Needs owner · age cargo features
+- **Where:** age/Cargo.toml:61, age/Cargo.toml:110
+- **Problem:** Nothing in age, rage, or their tests references num_traits: cargo check -p age --all-features --all-targets succeeds with the dependency and its entry in the ssh feature removed. But num-traits is an optional dependency, so it also defines the implicit feature age/num-traits, a public Cargo surface for downstream crates that enable it by name.
+- **Recommendation:** Owner decides whether the implicit feature counts as a supported contract. If not, remove the dependency and its ssh feature entry; this is a walk-back of that feature name only.
+- **Fix with:** dead-code-archaeology
+- **Effort:** S

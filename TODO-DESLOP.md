@@ -1,5 +1,5 @@
 Prefix: DSLP
-Next: 6
+Next: 8
 
 Deslop campaign backlog ([plan](https://github.com/laputa-systems/stuff/blob/main/docs/campaigns/deslop.md), tier E). One agent works this file with the `deslop` skill: take the lowest-numbered open ticket whose area does not start with `Needs owner ·`. After DSLP-5, work the open P1 and P2 findings, then fill in `## Report` below.
 
@@ -8,15 +8,6 @@ Deslop campaign backlog ([plan](https://github.com/laputa-systems/stuff/blob/mai
 Not started.
 
 ## Tickets
-
-### DSLP-2 · P2 · Diagnose: ultrareview into this backlog
-
-- **Area:** deslop · diagnose
-- **Where:** whole repository (our changes against upstream)
-- **Problem:** No review has ranked this repository's risks for the deslop pass.
-- **Recommendation:** Run the deslop Diagnose step. Accept: the diff touches only docs, comments, and this file, and every finding names its Fix with.
-- **Fix with:** deslop
-- **Effort:** S
 
 ### DSLP-3 · P2 · Types: strict profile and typing findings
 
@@ -44,4 +35,22 @@ Not started.
 - **Recommendation:** Run the deslop Dead code step. Accept: tools clean or allowlisted with reasons; walk-backs filed as Needs owner tickets.
 - **Fix with:** deslop
 - **Effort:** M
+
+### DSLP-6 · P2 · Bench: audit benchmark coverage and entrypoint
+
+- **Area:** deslop · bench
+- **Where:** age/benches/, Makefile
+- **Problem:** The fork benchmarks parser and throughput but their outcome coverage and selective entrypoint have not been audited.
+- **Recommendation:** Run the deslop Bench step and record ranked gaps and the selective entrypoint evidence.
+- **Fix with:** deslop
+- **Effort:** M
+
+### DSLP-7 · P3 · Report sub-1024-bit RSA recipients as weak keys
+
+- **Area:** ssh · errors
+- **Where:** age/src/ssh.rs:511; age/src/ssh/recipient.rs:224
+- **Problem:** The upgraded RSA parser rejects moduli below 1024 bits before the existing 2048-bit weak-key classification. A generated 768-bit SSH RSA recipient makes the built rage binary report unsupported ssh-rsa instead of the specific weak-key error; the public ParseRecipientKeyError contract also distinguishes RsaModulusTooSmall.
+- **Recommendation:** Preserve rejection while classifying sub-1024-bit RSA recipients as weak, with a regression covering both sides of the RSA library minimum.
+- **Fix with:** error-model
+- **Effort:** S
 

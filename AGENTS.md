@@ -1,5 +1,7 @@
 # Verification
 
+Source builds and release procedures: [docs/debian.md](docs/debian.md).
+
 Run `make test` for the workspace's default-feature test suite and `make lint` for Clippy across workspace targets. Set `TMPDIR=$PWD/.work/tmp` after creating that directory. On a loaded macOS arm64 host the cold test took 213 s, a consecutive warm test 36 s, and lint 627 s including build-lock wait; these are observations, not performance gates.
 
 - CLI flags, errors, and exit codes: `rage/tests/cli_tests.rs` and `rage/tests/cmd/`.

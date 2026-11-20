@@ -1,5 +1,5 @@
 Prefix: DSLP
-Next: 12
+Next: 13
 
 Deslop campaign backlog ([plan](https://github.com/laputa-systems/stuff/blob/main/docs/campaigns/deslop.md), tier E). One agent works this file with the `deslop` skill: take the lowest-numbered open ticket whose area does not start with `Needs owner ·`. After DSLP-5, work the open P1 and P2 findings, then fill in `## Report` below.
 
@@ -44,6 +44,15 @@ Not started.
 - **Recommendation:** Keep a host-keyed baseline for the Change tier and report paired ratios with rustybench diff; add allocation counters to the throughput workloads. Gate nothing until a quiet-host spread is measured.
 - **Fix with:** bench-pyramid
 - **Effort:** M
+
+### DSLP-12 · P3 · The plugin round trip test is unverified under make test-ci and the musl release lane
+
+- **Area:** deslop · tests
+- **Where:** Makefile test-ci; rage/tests/plugin_roundtrip.rs; .github/workflows/release.yml:90,109
+- **Problem:** rage/tests/plugin_roundtrip.rs needs the age-plugin-unencrypted example beside the rage test binary. make test builds it, and make test-ci now builds the release example, but test-ci needs a built dist binary and the musl docker lane, neither of which could run here, so where the example lands for a --target or musl-cargo build is unverified.
+- **Recommendation:** Run make test-ci in the next release workflow dispatch and, if the example path differs, resolve it from CARGO_BIN_EXE_rage's profile directory or build it from the test with cargo.
+- **Fix with:** deslop
+- **Effort:** S
 
 ### DSLP-9 · P4 · Drop the unused optional num-traits dependency of age
 

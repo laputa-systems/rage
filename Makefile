@@ -18,10 +18,12 @@ test:
 check:
 	@mkdir -p .work/tmp
 	TMPDIR="$(CURDIR)/.work/tmp" cargo clippy --workspace --all-targets -- -D warnings
+	TMPDIR="$(CURDIR)/.work/tmp" cargo build --quiet -p age-plugin --example age-plugin-unencrypted
 	TMPDIR="$(CURDIR)/.work/tmp" cargo test --workspace --lib --tests
 
 test-ci:
 	@test -x "target/$(TARGET)/dist/$(NAME)"
+	$(call cargo,test) build --quiet --release -p age-plugin --example age-plugin-unencrypted
 	$(call cargo,test) test --quiet --release -p $(NAME)
 
 release:

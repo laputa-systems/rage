@@ -86,6 +86,7 @@ fn example_plugin_encrypts_and_decrypts_through_rage() {
     let fixture = Fixture::new();
     let rage = PathBuf::from(env!("CARGO_BIN_EXE_rage"));
     let plugin = rage.parent().unwrap().join("examples/age-plugin-unencrypted");
+    assert!(plugin.exists(), "build the example first: cargo build -p age-plugin --example age-plugin-unencrypted (make test does)");
     symlink(plugin, fixture.0.join("age-plugin-unencrypted")).unwrap();
     let key = fixture.0.join("identity");
     fs::write(&key, b"AGE-PLUGIN-UNENCRYPTED-1CR7ZD5\n").unwrap();

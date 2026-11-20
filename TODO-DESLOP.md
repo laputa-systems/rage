@@ -1,5 +1,5 @@
 Prefix: DSLP
-Next: 9
+Next: 10
 
 Deslop campaign backlog ([plan](https://github.com/laputa-systems/stuff/blob/main/docs/campaigns/deslop.md), tier E). One agent works this file with the `deslop` skill: take the lowest-numbered open ticket whose area does not start with `Needs owner ·`. After DSLP-5, work the open P1 and P2 findings, then fill in `## Report` below.
 
@@ -8,15 +8,6 @@ Deslop campaign backlog ([plan](https://github.com/laputa-systems/stuff/blob/mai
 Not started.
 
 ## Tickets
-
-### DSLP-5 · P2 · Dead code: tools and debloat
-
-- **Area:** deslop · dead code
-- **Where:** whole repository (our changes)
-- **Problem:** No dead-code scan has run.
-- **Recommendation:** Run the deslop Dead code step. Accept: tools clean or allowlisted with reasons; walk-backs filed as Needs owner tickets.
-- **Fix with:** deslop
-- **Effort:** M
 
 ### DSLP-6 · P2 · Bench: audit benchmark coverage and entrypoint
 
@@ -43,5 +34,14 @@ Not started.
 - **Problem:** RAGE-4 (release archive modes) and RAGE-5 (musl build modes) are guarded only by tools/test_delivery.sh. Neither make test nor ci.yml runs it, and it needs GNU tar (--sort, --mtime), jaq and rg, so on macOS (bsdtar) it exits 1 at the package step. On this host the mode and musl-mode assertions were reproduced only through a bsdtar shim and by running the Makefile half directly.
 - **Recommendation:** Run the script in the ubuntu CI job (or a dedicated step) once jaq is available there, and state the GNU tar requirement in its header.
 - **Fix with:** deslop
+- **Effort:** S
+
+### DSLP-9 · P4 · Drop the unused optional num-traits dependency of age
+
+- **Area:** Needs owner · age cargo features
+- **Where:** age/Cargo.toml:61, age/Cargo.toml:110
+- **Problem:** Nothing in age, rage, or their tests references num_traits: cargo check -p age --all-features --all-targets succeeds with the dependency and its entry in the ssh feature removed. But num-traits is an optional dependency, so it also defines the implicit feature age/num-traits, a public Cargo surface for downstream crates that enable it by name.
+- **Recommendation:** Owner decides whether the implicit feature counts as a supported contract. If not, remove the dependency and its ssh feature entry; this is a walk-back of that feature name only.
+- **Fix with:** dead-code-archaeology
 - **Effort:** S
 

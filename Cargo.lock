@@ -82,7 +82,6 @@ dependencies = [
  "same-file",
  "scrypt",
  "sha2",
- "sha3",
  "subtle",
  "test-case",
  "tokio",
